@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Development System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+        
+        .card p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .api-info {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .api-info h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        
+        .endpoint {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .endpoint code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            background: #28a745;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+        
+        .footer {
+            text-align: center;
+            color: white;
+            opacity: 0.8;
+            margin-top: 40px;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 25px;
+            transition: background 0.3s ease;
+        }
+        
+        .btn:hover {
+            background: #5a6fd8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI Development System</h1>
+            <p>AI를 활용한 완전 자동화된 개발 시스템</p>
+            <div class="status">시스템 가동 중</div>
+        </div>
+        
+        <div class="cards">
+            <div class="card">
+                <h3>🧠 AI 모듈</h3>
+                <p>
+                    텍스트 생성, 코드 생성, 코드 리뷰, 프로젝트 구조 생성 등 
+                    다양한 AI 기능을 제공합니다.
+                </p>
+                <a href="#" class="btn" onclick="testAI()">AI 테스트</a>
+            </div>
+            
+            <div class="card">
+                <h3>📁 프로젝트 관리</h3>
+                <p>
+                    새로운 프로젝트 생성, 기능 추가, 빌드, 테스트 등 
+                    전체 프로젝트 라이프사이클을 관리합니다.
+                </p>
+                <a href="#" class="btn" onclick="testProjects()">프로젝트 관리</a>
+            </div>
+            
+            <div class="card">
+                <h3>⚙️ 자동화</h3>
+                <p>
+                    명령어 실행, 파일 관리, Git 작업, NPM 관리 등 
+                    개발 작업을 자동화합니다.
+                </p>
+                <a href="#" class="btn" onclick="testAutomation()">자동화 테스트</a>
+            </div>
+        </div>
+        
+        <div class="api-info">
+            <h2>📡 API 엔드포인트</h2>
+            
+            <div class="endpoint">
+                <strong>AI 서비스</strong><br>
+                <code>GET /api/v1/ai/status</code> - AI 서비스 상태<br>
+                <code>POST /api/v1/ai/generate-text</code> - 텍스트 생성<br>
+                <code>POST /api/v1/ai/generate-code</code> - 코드 생성
+            </div>
+            
+            <div class="endpoint">
+                <strong>프로젝트 관리</strong><br>
+                <code>GET /api/v1/projects</code> - 프로젝트 목록<br>
+                <code>POST /api/v1/projects</code> - 새 프로젝트 생성<br>
+                <code>POST /api/v1/projects/:id/features</code> - 기능 추가
+            </div>
+            
+            <div class="endpoint">
+                <strong>자동화</strong><br>
+                <code>GET /api/v1/automation/status</code> - 자동화 서비스 상태<br>
+                <code>POST /api/v1/automation/execute</code> - 명령어 실행<br>
+                <code>GET /api/v1/automation/history</code> - 명령어 히스토리
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; 2025 AI Development System. All rights reserved.</p>
+        </div>
+    </div>
+
+    <script>
+        async function testAI() {
+            try {
+                const response = await fetch('/api/v1/ai/status');
+                const data = await response.json();
+                alert('AI 서비스 상태: ' + data.data.status);
+            } catch (error) {
+                alert('AI 서비스 연결 실패: ' + error.message);
+            }
+        }
+        
+        async function testProjects() {
+            try {
+                const response = await fetch('/api/v1/projects');
+                const data = await response.json();
+                alert('프로젝트 개수: ' + data.data.count + '개');
+            } catch (error) {
+                alert('프로젝트 서비스 연결 실패: ' + error.message);
+            }
+        }
+        
+        async function testAutomation() {
+            try {
+                const response = await fetch('/api/v1/automation/status');
+                const data = await response.json();
+                alert('자동화 서비스 상태: ' + data.data.status);
+            } catch (error) {
+                alert('자동화 서비스 연결 실패: ' + error.message);
+            }
+        }
+        
+        // 페이지 로드 시 시스템 상태 확인
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                console.log('시스템 상태:', data);
+            } catch (error) {
+                console.error('시스템 상태 확인 실패:', error);
+            }
+        });
+    </script>
+</body>
+</html>

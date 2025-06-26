@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Development System - 완전 자동화 개발 환경</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .code-editor {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+    <div id="app" x-data="appData()" class="min-h-screen">
+        <!-- 헤더 -->
+        <header class="gradient-bg shadow-lg">
+            <div class="container mx-auto px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <i class="fas fa-robot text-3xl text-white"></i>
+                        <div>
+                            <h1 class="text-2xl font-bold text-white">AI Development System</h1>
+                            <p class="text-blue-200 text-sm">완전 자동화 개발 환경</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span class="glass px-4 py-2 rounded-lg">
+                            <i class="fas fa-circle text-green-400 mr-2"></i>
+                            <span x-text="systemStatus"></span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 메인 네비게이션 -->
+        <nav class="bg-gray-800 border-b border-gray-700">
+            <div class="container mx-auto px-6">
+                <div class="flex space-x-8">
+                    <button @click="currentTab = 'dashboard'" 
+                            :class="currentTab === 'dashboard' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-300 hover:text-white'"
+                            class="py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                        <i class="fas fa-tachometer-alt mr-2"></i>대시보드
+                    </button>
+                    <button @click="currentTab = 'codegen'" 
+                            :class="currentTab === 'codegen' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-300 hover:text-white'"
+                            class="py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                        <i class="fas fa-code mr-2"></i>코드 생성
+                    </button>
+                    <button @click="currentTab = 'scaffold'" 
+                            :class="currentTab === 'scaffold' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-300 hover:text-white'"
+                            class="py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                        <i class="fas fa-project-diagram mr-2"></i>프로젝트 생성
+                    </button>
+                    <button @click="currentTab = 'analysis'" 
+                            :class="currentTab === 'analysis' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-300 hover:text-white'"
+                            class="py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                        <i class="fas fa-chart-line mr-2"></i>코드 분석
+                    </button>
+                    <button @click="currentTab = 'automation'" 
+                            :class="currentTab === 'automation' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-300 hover:text-white'"
+                            class="py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                        <i class="fas fa-magic mr-2"></i>자동화
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 메인 컨텐츠 -->
+        <main class="container mx-auto px-6 py-8">
+            <!-- 대시보드 -->
+            <div x-show="currentTab === 'dashboard'" class="space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-blue-500 bg-opacity-20">
+                                <i class="fas fa-code text-blue-400 text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-gray-400 text-sm">생성된 코드</p>
+                                <p class="text-2xl font-bold" x-text="stats.generatedCode"></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-green-500 bg-opacity-20">
+                                <i class="fas fa-project-diagram text-green-400 text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-gray-400 text-sm">생성된 프로젝트</p>
+                                <p class="text-2xl font-bold" x-text="stats.generatedProjects"></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-yellow-500 bg-opacity-20">
+                                <i class="fas fa-chart-line text-yellow-400 text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-gray-400 text-sm">분석 세션</p>
+                                <p class="text-2xl font-bold" x-text="stats.analysisSessions"></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-purple-500 bg-opacity-20">
+                                <i class="fas fa-magic text-purple-400 text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-gray-400 text-sm">자동화 실행</p>
+                                <p class="text-2xl font-bold" x-text="stats.automationRuns"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 최근 활동 -->
+                <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                    <h3 class="text-xl font-semibold mb-4">
+                        <i class="fas fa-history mr-2 text-blue-400"></i>최근 활동
+                    </h3>
+                    <div class="space-y-4">
+                        <template x-for="activity in recentActivities" :key="activity.id">
+                            <div class="flex items-center space-x-4 p-3 bg-gray-700 rounded-lg">
+                                <div class="p-2 rounded-full" :class="activity.iconBg">
+                                    <i :class="activity.icon" class="text-white"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-medium" x-text="activity.title"></p>
+                                    <p class="text-sm text-gray-400" x-text="activity.description"></p>
+                                </div>
+                                <span class="text-sm text-gray-400" x-text="activity.time"></span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 코드 생성 탭 -->
+            <div x-show="currentTab === 'codegen'" class="space-y-6">
+                <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                    <h2 class="text-2xl font-bold mb-6">
+                        <i class="fas fa-code mr-2 text-blue-400"></i>AI 코드 생성
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- 입력 영역 -->
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">프롬프트</label>
+                                <textarea x-model="codeGen.prompt" 
+                                         placeholder="예: React 컴포넌트를 만들어주세요. 사용자 프로필을 표시하는 카드 형태로..."
+                                         class="w-full h-32 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"></textarea>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">언어</label>
+                                    <select x-model="codeGen.language" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-blue-500 focus:outline-none">
+                                        <option value="javascript">JavaScript</option>
+                                        <option value="typescript">TypeScript</option>
+                                        <option value="python">Python</option>
+                                        <option value="java">Java</option>
+                                        <option value="cpp">C++</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">프레임워크</label>
+                                    <select x-model="codeGen.framework" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-blue-500 focus:outline-none">
+                                        <option value="">선택 안함</option>
+                                        <option value="react">React</option>
+                                        <option value="vue">Vue.js</option>
+                                        <option value="angular">Angular</option>
+                                        <option value="express">Express.js</option>
+                                        <option value="fastapi">FastAPI</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <button @click="generateCode()" 
+                                    :disabled="loading.codeGen || !codeGen.prompt"
+                                    class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg transition-colors">
+                                <span x-show="!loading.codeGen">
+                                    <i class="fas fa-magic mr-2"></i>코드 생성
+                                </span>
+                                <span x-show="loading.codeGen">
+                                    <i class="fas fa-spinner fa-spin mr-2"></i>생성 중...
+                                </span>
+                            </button>
+                        </div>
+                        
+                        <!-- 결과 영역 -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-sm font-medium">생성된 코드</label>
+                                <div class="flex space-x-2" x-show="codeGen.result">
+                                    <button @click="copyCode()" class="text-blue-400 hover:text-blue-300 text-sm">
+                                        <i class="fas fa-copy mr-1"></i>복사
+                                    </button>
+                                    <button @click="saveCode()" class="text-green-400 hover:text-green-300 text-sm">
+                                        <i class="fas fa-save mr-1"></i>저장
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="bg-gray-900 border border-gray-600 rounded-lg p-4 h-96 overflow-auto">
+                                <pre x-show="codeGen.result" class="code-editor text-sm text-green-400"><code x-text="codeGen.result"></code></pre>
+                                <div x-show="!codeGen.result" class="h-full flex items-center justify-center text-gray-500">
+                                    코드가 여기에 표시됩니다
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 코드 분석 결과 -->
+                    <div x-show="codeGen.analysis" class="mt-6 bg-gray-700 rounded-lg p-4">
+                        <h3 class="font-semibold mb-3">
+                            <i class="fas fa-chart-bar mr-2 text-yellow-400"></i>코드 분석 결과
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-blue-400" x-text="codeGen.analysis?.quality?.score || 0"></div>
+                                <div class="text-sm text-gray-400">품질 점수</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-green-400" x-text="codeGen.analysis?.complexity?.cyclomatic || 0"></div>
+                                <div class="text-sm text-gray-400">복잡도</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-purple-400" x-text="codeGen.analysis?.lineCount || 0"></div>
+                                <div class="text-sm text-gray-400">라인 수</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 프로젝트 생성 탭 -->
+            <div x-show="currentTab === 'scaffold'" class="space-y-6">
+                <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                    <h2 class="text-2xl font-bold mb-6">
+                        <i class="fas fa-project-diagram mr-2 text-green-400"></i>프로젝트 스캐폴딩
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- 프로젝트 설정 -->
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">프로젝트 이름</label>
+                                <input x-model="scaffold.projectName" 
+                                       type="text" 
+                                       placeholder="my-awesome-project"
+                                       class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">템플릿 선택</label>
+                                <div class="space-y-2">
+                                    <template x-for="template in templates" :key="template.id">
+                                        <label class="flex items-center p-3 bg-gray-700 rounded-lg cursor-pointer hover:bg-gray-600 transition-colors">
+                                            <input type="radio" x-model="scaffold.templateType" :value="template.id" class="mr-3">
+                                            <div class="flex-1">
+                                                <div class="font-medium" x-text="template.name"></div>
+                                                <div class="text-sm text-gray-400" x-text="template.description"></div>
+                                            </div>
+                                        </label>
+                                    </template>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <label class="flex items-center">
+                                    <input type="checkbox" x-model="scaffold.options.initGit" class="mr-2">
+                                    <span class="text-sm">Git 초기화</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" x-model="scaffold.options.installDeps" class="mr-2">
+                                    <span class="text-sm">의존성 설치</span>
+                                </label>
+                            </div>
+                            
+                            <button @click="createProject()" 
+                                    :disabled="loading.scaffold || !scaffold.projectName || !scaffold.templateType"
+                                    class="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg transition-colors">
+                                <span x-show="!loading.scaffold">
+                                    <i class="fas fa-plus mr-2"></i>프로젝트 생성
+                                </span>
+                                <span x-show="loading.scaffold">
+                                    <i class="fas fa-spinner fa-spin mr-2"></i>생성 중...
+                                </span>
+                            </button>
+                        </div>
+                        
+                        <!-- 미리보기 -->
+                        <div>
+                            <h3 class="font-semibold mb-3">
+                                <i class="fas fa-eye mr-2 text-blue-400"></i>프로젝트 구조 미리보기
+                            </h3>
+                            <div class="bg-gray-900 border border-gray-600 rounded-lg p-4 h-80 overflow-auto">
+                                <div x-show="scaffold.preview" class="space-y-2">
+                                    <template x-for="(item, path) in scaffold.preview" :key="path">
+                                        <div class="flex items-center text-sm">
+                                            <i :class="path.endsWith('/') ? 'fas fa-folder text-yellow-400' : 'fas fa-file text-gray-400'" class="mr-2"></i>
+                                            <span x-text="path"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                                <div x-show="!scaffold.preview" class="h-full flex items-center justify-center text-gray-500">
+                                    템플릿을 선택하면 구조가 표시됩니다
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 생성 결과 -->
+                <div x-show="scaffold.result" class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                    <h3 class="font-semibold mb-3 text-green-400">
+                        <i class="fas fa-check-circle mr-2"></i>프로젝트 생성 완료
+                    </h3>
+                    <div class="bg-gray-900 rounded-lg p-4">
+                        <p class="mb-2">다음 단계:</p>
+                        <ol class="list-decimal list-inside space-y-1 text-sm text-gray-300">
+                            <template x-for="step in scaffold.nextSteps" :key="step">
+                                <li x-text="step"></li>
+                            </template>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 코드 분석 탭 -->
+            <div x-show="currentTab === 'analysis'" class="space-y-6">
+                <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                    <h2 class="text-2xl font-bold mb-6">
+                        <i class="fas fa-chart-line mr-2 text-yellow-400"></i>코드 분석
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- 분석 입력 -->
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">분석할 코드</label>
+                                <textarea x-model="analysis.code" 
+                                         placeholder="분석할 코드를 입력하세요..."
+                                         class="w-full h-64 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 code-editor text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"></textarea>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">언어</label>
+                                <select x-model="analysis.language" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-blue-500 focus:outline-none">
+                                    <option value="javascript">JavaScript</option>
+                                    <option value="typescript">TypeScript</option>
+                                    <option value="python">Python</option>
+                                    <option value="java">Java</option>
+                                </select>
+                            </div>
+                            
+                            <div class="flex space-x-2">
+                                <button @click="analyzeCode('quick')" 
+                                        :disabled="loading.analysis || !analysis.code"
+                                        class="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                                    <i class="fas fa-tachometer-alt mr-2"></i>빠른 분석
+                                </button>
+                                <button @click="analyzeCode('security')" 
+                                        :disabled="loading.analysis || !analysis.code"
+                                        class="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                                    <i class="fas fa-shield-alt mr-2"></i>보안 분석
+                                </button>
+                                <button @click="analyzeCode('performance')" 
+                                        :disabled="loading.analysis || !analysis.code"
+                                        class="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                                    <i class="fas fa-rocket mr-2"></i>성능 분석
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- 분석 결과 -->
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="font-semibold">분석 결과</h3>
+                                <span x-show="loading.analysis" class="text-blue-400">
+                                    <i class="fas fa-spinner fa-spin mr-2"></i>분석 중...
+                                </span>
+                            </div>
+                            
+                            <div x-show="analysis.result" class="space-y-4">
+                                <!-- 점수 표시 -->
+                                <div class="grid grid-cols-3 gap-4">
+                                    <div class="text-center p-3 bg-gray-700 rounded-lg">
+                                        <div class="text-2xl font-bold" 
+                                             :class="getScoreColor(analysis.result?.overallScore || analysis.result?.score || 0)"
+                                             x-text="analysis.result?.overallScore || analysis.result?.score || 0"></div>
+                                        <div class="text-sm text-gray-400">총점</div>
+                                    </div>
+                                    <div class="text-center p-3 bg-gray-700 rounded-lg">
+                                        <div class="text-2xl font-bold text-yellow-400" x-text="analysis.result?.complexity?.cyclomatic || analysis.result?.totalIssues || 0"></div>
+                                        <div class="text-sm text-gray-400">복잡도/이슈</div>
+                                    </div>
+                                    <div class="text-center p-3 bg-gray-700 rounded-lg">
+                                        <div class="text-2xl font-bold text-purple-400" x-text="analysis.result?.patterns?.length || analysis.result?.metrics?.lineCount || 0"></div>
+                                        <div class="text-sm text-gray-400">패턴/라인</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 이슈 목록 -->
+                                <div x-show="analysis.result?.issues?.length > 0" class="bg-gray-700 rounded-lg p-4">
+                                    <h4 class="font-medium mb-2 text-red-400">
+                                        <i class="fas fa-exclamation-triangle mr-2"></i>발견된 이슈
+                                    </h4>
+                                    <div class="space-y-2 max-h-40 overflow-auto">
+                                        <template x-for="issue in analysis.result.issues" :key="issue.type">
+                                            <div class="flex items-start space-x-3 p-2 bg-gray-600 rounded">
+                                                <span :class="getSeverityColor(issue.severity)" class="px-2 py-1 rounded text-xs font-medium">
+                                                    <span x-text="issue.severity"></span>
+                                                </span>
+                                                <div class="flex-1">
+                                                    <div class="font-medium text-sm" x-text="issue.message"></div>
+                                                    <div class="text-xs text-gray-400" x-show="issue.line">라인 <span x-text="issue.line"></span></div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                                
+                                <!-- 권장사항 -->
+                                <div x-show="analysis.result?.recommendations?.length > 0" class="bg-gray-700 rounded-lg p-4">
+                                    <h4 class="font-medium mb-2 text-green-400">
+                                        <i class="fas fa-lightbulb mr-2"></i>개선 권장사항
+                                    </h4>
+                                    <ul class="space-y-1 text-sm">
+                                        <template x-for="rec in analysis.result.recommendations" :key="rec">
+                                            <li class="flex items-start">
+                                                <i class="fas fa-arrow-right text-green-400 mr-2 mt-1"></i>
+                                                <span x-text="rec"></span>
+                                            </li>
+                                        </template>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div x-show="!analysis.result && !loading.analysis" class="h-64 flex items-center justify-center text-gray-500 border-2 border-dashed border-gray-600 rounded-lg">
+                                분석 결과가 여기에 표시됩니다
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 자동화 탭 -->
+            <div x-show="currentTab === 'automation'" class="space-y-6">
+                <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                    <h2 class="text-2xl font-bold mb-6">
+                        <i class="fas fa-magic mr-2 text-purple-400"></i>개발 자동화
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- 자동화 작업들 -->
+                        <div class="bg-gray-700 rounded-lg p-6">
+                            <div class="flex items-center mb-4">
+                                <i class="fas fa-cogs text-blue-400 text-2xl mr-3"></i>
+                                <h3 class="font-semibold">프로젝트 설정</h3>
+                            </div>
+                            <p class="text-sm text-gray-400 mb-4">ESLint, Prettier, Git 등 기본 설정</p>
+                            <button @click="runAutomation('setup')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors">
+                                <i class="fas fa-play mr-2"></i>실행
+                            </button>
+                        </div>
+                        
+                        <div class="bg-gray-700 rounded-lg p-6">
+                            <div class="flex items-center mb-4">
+                                <i class="fas fa-download text-green-400 text-2xl mr-3"></i>
+                                <h3 class="font-semibold">의존성 업데이트</h3>
+                            </div>
+                            <p class="text-sm text-gray-400 mb-4">npm/pip 패키지 자동 업데이트</p>
+                            <button @click="runAutomation('update')" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors">
+                                <i class="fas fa-sync mr-2"></i>업데이트
+                            </button>
+                        </div>
+                        
+                        <div class="bg-gray-700 rounded-lg p-6">
+                            <div class="flex items-center mb-4">
+                                <i class="fas fa-shield-alt text-red-400 text-2xl mr-3"></i>
+                                <h3 class="font-semibold">보안 감사</h3>
+                            </div>
+                            <p class="text-sm text-gray-400 mb-4">취약점 검사 및 보안 설정</p>
+                            <button @click="runAutomation('security')" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition-colors">
+                                <i class="fas fa-search mr-2"></i>검사
+                            </button>
+                        </div>
+                        
+                        <div class="bg-gray-700 rounded-lg p-6">
+                            <div class="flex items-center mb-4">
+                                <i class="fas fa-vial text-yellow-400 text-2xl mr-3"></i>
+                                <h3 class="font-semibold">테스트 자동화</h3>
+                            </div>
+                            <p class="text-sm text-gray-400 mb-4">단위 테스트 생성 및 실행</p>
+                            <button @click="runAutomation('test')" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white py-2 px-4 rounded-lg transition-colors">
+                                <i class="fas fa-flask mr-2"></i>테스트
+                            </button>
+                        </div>
+                        
+                        <div class="bg-gray-700 rounded-lg p-6">
+                            <div class="flex items-center mb-4">
+                                <i class="fas fa-rocket text-purple-400 text-2xl mr-3"></i>
+                                <h3 class="font-semibold">배포 자동화</h3>
+                            </div>
+                            <p class="text-sm text-gray-400 mb-4">Docker, CI/CD 설정</p>
+                            <button @click="runAutomation('deploy')" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg transition-colors">
+                                <i class="fas fa-cloud-upload-alt mr-2"></i>배포
+                            </button>
+                        </div>
+                        
+                        <div class="bg-gray-700 rounded-lg p-6">
+                            <div class="flex items-center mb-4">
+                                <i class="fas fa-file-alt text-indigo-400 text-2xl mr-3"></i>
+                                <h3 class="font-semibold">문서화</h3>
+                            </div>
+                            <p class="text-sm text-gray-400 mb-4">README, API 문서 자동 생성</p>
+                            <button @click="runAutomation('docs')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg transition-colors">
+                                <i class="fas fa-book mr-2"></i>생성
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 자동화 로그 -->
+                <div x-show="automation.logs.length > 0" class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                    <h3 class="font-semibold mb-4">
+                        <i class="fas fa-terminal mr-2 text-green-400"></i>실행 로그
+                    </h3>
+                    <div class="bg-gray-900 rounded-lg p-4 h-40 overflow-auto code-editor">
+                        <template x-for="log in automation.logs" :key="log.id">
+                            <div class="text-sm" :class="log.level === 'error' ? 'text-red-400' : log.level === 'warn' ? 'text-yellow-400' : 'text-green-400'">
+                                <span class="text-gray-500" x-text="log.timestamp"></span>
+                                <span x-text="log.message"></span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function appData() {
+            return {
+                currentTab: 'dashboard',
+                systemStatus: 'Active',
+                loading: {
+                    codeGen: false,
+                    scaffold: false,
+                    analysis: false
+                },
+                stats: {
+                    generatedCode: 127,
+                    generatedProjects: 23,
+                    analysisSessions: 89,
+                    automationRuns: 156
+                },
+                recentActivities: [
+                    {
+                        id: 1,
+                        icon: 'fas fa-code',
+                        iconBg: 'bg-blue-500',
+                        title: 'React 컴포넌트 생성',
+                        description: 'UserProfile.jsx 파일이 생성되었습니다',
+                        time: '2분 전'
+                    },
+                    {
+                        id: 2,
+                        icon: 'fas fa-project-diagram',
+                        iconBg: 'bg-green-500',
+                        title: '새 프로젝트 생성',
+                        description: 'my-react-app 프로젝트가 생성되었습니다',
+                        time: '15분 전'
+                    },
+                    {
+                        id: 3,
+                        icon: 'fas fa-chart-line',
+                        iconBg: 'bg-yellow-500',
+                        title: '코드 분석 완료',
+                        description: '보안 점수: 85/100, 3개 이슈 발견',
+                        time: '32분 전'
+                    }
+                ],
+                codeGen: {
+                    prompt: '',
+                    language: 'javascript',
+                    framework: '',
+                    result: '',
+                    analysis: null
+                },
+                scaffold: {
+                    projectName: '',
+                    templateType: '',
+                    options: {
+                        initGit: true,
+                        installDeps: true
+                    },
+                    preview: null,
+                    result: null,
+                    nextSteps: []
+                },
+                templates: [
+                    { id: 'react-app', name: 'React App', description: '모던 React 애플리케이션 (Vite + TypeScript)' },
+                    { id: 'node-api', name: 'Node.js API', description: 'Express + TypeScript API 서버' },
+                    { id: 'python-ml', name: 'Python ML', description: 'Python 머신러닝 프로젝트 (FastAPI + Jupyter)' },
+                    { id: 'vscode-extension', name: 'VS Code Extension', description: 'Visual Studio Code 확장 프로그램' }
+                ],
+                analysis: {
+                    code: '',
+                    language: 'javascript',
+                    result: null
+                },
+                automation: {
+                    logs: []
+                },
+
+                // 메서드들
+                async generateCode() {
+                    this.loading.codeGen = true;
+                    try {
+                        const response = await fetch('/api/v1/codegen/generate', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                prompt: this.codeGen.prompt,
+                                language: this.codeGen.language,
+                                options: { framework: this.codeGen.framework }
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        if (result.success) {
+                            this.codeGen.result = result.data.code;
+                            this.codeGen.analysis = result.data.analysis;
+                            this.stats.generatedCode++;
+                        } else {
+                            alert('코드 생성 실패: ' + result.error);
+                        }
+                    } catch (error) {
+                        alert('오류: ' + error.message);
+                    } finally {
+                        this.loading.codeGen = false;
+                    }
+                },
+
+                async copyCode() {
+                    try {
+                        await navigator.clipboard.writeText(this.codeGen.result);
+                        // 성공 알림을 위한 간단한 피드백
+                        const originalText = event.target.innerHTML;
+                        event.target.innerHTML = '<i class="fas fa-check mr-1"></i>복사됨';
+                        setTimeout(() => {
+                            event.target.innerHTML = originalText;
+                        }, 1000);
+                    } catch (error) {
+                        alert('복사 실패: ' + error.message);
+                    }
+                },
+
+                async saveCode() {
+                    const filename = prompt('파일명을 입력하세요:', `generated.${this.getFileExtension(this.codeGen.language)}`);
+                    if (!filename) return;
+
+                    try {
+                        const response = await fetch('/api/v1/codegen/save', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                generatedCode: {
+                                    code: this.codeGen.result,
+                                    analysis: this.codeGen.analysis,
+                                    metadata: {
+                                        prompt: this.codeGen.prompt,
+                                        language: this.codeGen.language
+                                    }
+                                },
+                                filename
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        if (result.success) {
+                            alert('파일이 저장되었습니다: ' + result.data.filePath);
+                        } else {
+                            alert('저장 실패: ' + result.error);
+                        }
+                    } catch (error) {
+                        alert('오류: ' + error.message);
+                    }
+                },
+
+                async createProject() {
+                    this.loading.scaffold = true;
+                    try {
+                        const response = await fetch('/api/v1/scaffold/create', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                templateType: this.scaffold.templateType,
+                                projectName: this.scaffold.projectName,
+                                options: this.scaffold.options
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        if (result.success) {
+                            this.scaffold.result = result.data;
+                            this.scaffold.nextSteps = result.data.nextSteps;
+                            this.stats.generatedProjects++;
+                        } else {
+                            alert('프로젝트 생성 실패: ' + result.error);
+                        }
+                    } catch (error) {
+                        alert('오류: ' + error.message);
+                    } finally {
+                        this.loading.scaffold = false;
+                    }
+                },
+
+                async analyzeCode(type = 'quick') {
+                    this.loading.analysis = true;
+                    try {
+                        const endpoint = type === 'quick' ? 'quick-check' : type;
+                        const response = await fetch(`/api/v1/analysis/${endpoint}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                code: this.analysis.code,
+                                language: this.analysis.language
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        if (result.success) {
+                            this.analysis.result = result.data;
+                            this.stats.analysisSessions++;
+                        } else {
+                            alert('분석 실패: ' + result.error);
+                        }
+                    } catch (error) {
+                        alert('오류: ' + error.message);
+                    } finally {
+                        this.loading.analysis = false;
+                    }
+                },
+
+                async runAutomation(type) {
+                    this.automation.logs.push({
+                        id: Date.now(),
+                        timestamp: new Date().toLocaleTimeString(),
+                        level: 'info',
+                        message: `${type} 자동화 시작...`
+                    });
+                    
+                    // 실제 자동화 실행은 여기에서
+                    setTimeout(() => {
+                        this.automation.logs.push({
+                            id: Date.now(),
+                            timestamp: new Date().toLocaleTimeString(),
+                            level: 'success',
+                            message: `${type} 자동화 완료!`
+                        });
+                        this.stats.automationRuns++;
+                    }, 2000);
+                },
+
+                getFileExtension(language) {
+                    const extensions = {
+                        javascript: 'js',
+                        typescript: 'ts',
+                        python: 'py',
+                        java: 'java',
+                        cpp: 'cpp'
+                    };
+                    return extensions[language] || 'txt';
+                },
+
+                getScoreColor(score) {
+                    if (score >= 80) return 'text-green-400';
+                    if (score >= 60) return 'text-yellow-400';
+                    return 'text-red-400';
+                },
+
+                getSeverityColor(severity) {
+                    const colors = {
+                        high: 'bg-red-600 text-white',
+                        medium: 'bg-yellow-600 text-white',
+                        low: 'bg-blue-600 text-white'
+                    };
+                    return colors[severity] || 'bg-gray-600 text-white';
+                },
+
+                // 초기화
+                async init() {
+                    // 템플릿 목록 로드
+                    try {
+                        const response = await fetch('/api/v1/scaffold/templates');
+                        const result = await response.json();
+                        if (result.success) {
+                            this.templates = result.data;
+                        }
+                    } catch (error) {
+                        console.error('템플릿 로드 실패:', error);
+                    }
+                }
+            }
+        }
+
+        // 페이지 로드시 초기화
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('appData', appData);
+        });
+    </script>
+</body>
+</html>
