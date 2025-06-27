@@ -2,12 +2,14 @@
  * AI 코드 생성기 - 자동 코드 생성 및 분석 기능
  */
 import AIService from './AIService.js';
+import DatabaseService from '../../services/DatabaseService.js';
 import fs from 'fs/promises';
 import path from 'path';
 
-export default class CodeGenerator {
+export class CodeGenerator {
   constructor() {
     this.aiService = new AIService();
+    this.db = new DatabaseService();
     this.templates = new Map();
     this.loadTemplates();
   }
@@ -40,7 +42,7 @@ export default class CodeGenerator {
       const code = this.extractCodeFromResponse(response);
       const analysis = await this.analyzeCode(code, language);
       
-      return {
+      const result = {
         code,
         analysis,
         language,
@@ -50,6 +52,25 @@ export default class CodeGenerator {
           options
         }
       };
+
+      // 데이터베이스에 코드 생성 히스토리 저장
+      try {
+        const generationId = `gen_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        this.db.saveCodeGeneration({
+          id: generationId,
+          project_id: options.projectId || null,
+          prompt: prompt,
+          language: language,
+          framework: options.framework || null,
+          generated_code: code,
+          status: 'completed'
+        });
+        console.log(`💾 코드 생성 히스토리 저장 완료: ${generationId}`);
+      } catch (dbError) {
+        console.warn(`⚠️ 코드 생성 히스토리 저장 실패: ${dbError.message}`);
+      }
+      
+      return result;
     } catch (error) {
       console.error('코드 생성 실패:', error);
       return this.generateFallbackCode(prompt, language, options);
@@ -376,4 +397,115 @@ class GeneratedClass:
       };
     }
   }
+
+  /**
+   * AI 기반 코드 자동 완성
+   */
+  async generateCodeCompletion({ code, language, cursorPosition, context = {} }) {
+    try {
+      const prompt = `다음 코드의 자동 완성을 제공해주세요:
+
+언어: ${language}
+현재 코드:
+${code}
+
+커서 위치: ${cursorPosition}
+컨텍스트: ${JSON.stringify(context)}
+
+커서 위치에서 가능한 코드 완성 제안들을 제공해주세요. JSON 형태로 응답해주세요:
+{
+  "completions": [
+    {
+      "text": "완성된 코드",
+      "description": "설명",
+      "type": "function|variable|class|import|etc"
+    }
+  ]
+}`;
+
+      const response = await this.aiService.generateResponse(prompt);
+      
+      try {
+        return JSON.parse(response);
+      } catch {
+        return {
+          completions: [{
+            text: response,
+            description: "AI 제안",
+            type: "general"
+          }]
+        };
+      }
+      
+    } catch (error) {
+      console.error('코드 자동 완성 생성 오류:', error);
+      return {
+        completions: [],
+        error: '자동 완성을 생성할 수 없습니다.'
+      };
+    }
+  }
+
+  /**
+   * AI 기반 리팩토링 제안
+   */
+  async generateRefactoring({ code, type, language, context = {} }) {
+    try {
+      const refactorTypes = {
+        'extract_method': '메서드 추출',
+        'extract_variable': '변수 추출',
+        'rename': '이름 변경',
+        'simplify': '코드 단순화',
+        'optimize': '성능 최적화',
+        'modernize': '최신 문법 적용'
+      };
+
+      const prompt = `다음 ${language} 코드에 대해 "${refactorTypes[type] || type}" 리팩토링을 제안해주세요:
+
+현재 코드:
+${code}
+
+컨텍스트: ${JSON.stringify(context)}
+
+리팩토링 제안을 JSON 형태로 제공해주세요:
+{
+  "suggestions": [
+    {
+      "title": "제안 제목",
+      "description": "설명",
+      "originalCode": "원본 코드 부분",
+      "refactoredCode": "리팩토링된 코드",
+      "benefits": ["장점1", "장점2"],
+      "difficulty": "easy|medium|hard"
+    }
+  ]
+}`;
+
+      const response = await this.aiService.generateResponse(prompt);
+      
+      try {
+        return JSON.parse(response);
+      } catch {
+        return {
+          suggestions: [{
+            title: "AI 리팩토링 제안",
+            description: response,
+            originalCode: code,
+            refactoredCode: response,
+            benefits: ["AI 제안 적용"],
+            difficulty: "medium"
+          }]
+        };
+      }
+      
+    } catch (error) {
+      console.error('리팩토링 제안 생성 오류:', error);
+      return {
+        suggestions: [],
+        error: '리팩토링 제안을 생성할 수 없습니다.'
+      };
+    }
+  }
 }
+
+export default CodeGenerator;

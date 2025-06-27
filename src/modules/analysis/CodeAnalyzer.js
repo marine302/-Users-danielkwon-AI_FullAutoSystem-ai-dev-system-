@@ -4,9 +4,9 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { execSync } from 'child_process';
-import CodeGenerator from '../ai/CodeGenerator.js';
+import { CodeGenerator } from '../ai/CodeGenerator.js';
 
-export default class CodeAnalyzer {
+export class CodeAnalyzer {
   constructor() {
     this.codeGenerator = new CodeGenerator();
     this.analysisCache = new Map();
@@ -656,3 +656,5 @@ export default class CodeAnalyzer {
     return Math.round(totalScore / files.length);
   }
 }
+
+export default CodeAnalyzer;

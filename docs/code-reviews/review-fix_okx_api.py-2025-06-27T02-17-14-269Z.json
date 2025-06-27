@@ -1,0 +1,51 @@
+{
+  "timestamp": "2025-06-27T02:17:14.265Z",
+  "filePath": "fix_okx_api.py",
+  "overall_score": 78,
+  "categories": {
+    "basic": {
+      "score": 50,
+      "metrics": {},
+      "issues": []
+    },
+    "ai_insights": {
+      "score": 85,
+      "insights": [
+        "AI 분석을 완료할 수 없습니다."
+      ],
+      "improvements": [],
+      "patterns": []
+    },
+    "security": {
+      "score": 90,
+      "vulnerabilities": [],
+      "security_level": "high",
+      "recommendations": []
+    },
+    "performance": {
+      "score": 85,
+      "bottlenecks": [],
+      "optimizations": [],
+      "complexity_score": 0
+    }
+  },
+  "issues": [],
+  "suggestions": [
+    {
+      "priority": "LOW",
+      "category": "GENERAL",
+      "description": "코드 리뷰 결과를 참고하여 개선해주세요.",
+      "implementation": "발견된 문제점들을 하나씩 해결해보세요."
+    }
+  ],
+  "security_alerts": [],
+  "performance_tips": [],
+  "auto_fixes": [
+    {
+      "type": "REPLACE",
+      "from": "==",
+      "to": "===",
+      "description": "느슨한 비교를 엄격한 비교로 변경"
+    }
+  ]
+}

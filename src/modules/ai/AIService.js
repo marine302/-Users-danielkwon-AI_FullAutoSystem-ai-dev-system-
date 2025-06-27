@@ -249,4 +249,5 @@ ${type} 문서를 생성해주세요.
   }
 }
 
+export { AIService };
 export default AIService;

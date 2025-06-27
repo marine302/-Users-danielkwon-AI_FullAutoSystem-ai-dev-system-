@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  ai-dev-system:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - CORS_ORIGIN=*
+    env_file:
+      - .env.production
+    volumes:
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - ai-dev-system
+    restart: unless-stopped

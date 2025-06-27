@@ -1,0 +1,141 @@
+{
+  "id": "c8503a11-479b-408c-b845-2432d122032c",
+  "name": "테스트 AI 프로젝트",
+  "description": "인공지능 기반 추천 시스템 개발",
+  "created_at": "2025-06-27T02:06:27.045Z",
+  "created_by": "test-user",
+  "status": "planning",
+  "priority": "medium",
+  "ai_analysis": {
+    "project_type": "ai-project",
+    "key_features": [
+      "기본 기능"
+    ],
+    "technical_challenges": [
+      "구현 복잡도"
+    ],
+    "business_value": "사업 가치 창출"
+  },
+  "estimated_duration": 8,
+  "estimated_complexity": "MEDIUM",
+  "recommended_team_size": "3-5명",
+  "phases": [
+    {
+      "name": "계획 및 설계",
+      "description": "프로젝트 계획 수립 및 시스템 설계",
+      "duration_weeks": 2,
+      "deliverables": [
+        "프로젝트 계획서",
+        "시스템 설계서"
+      ]
+    },
+    {
+      "name": "개발",
+      "description": "핵심 기능 개발",
+      "duration_weeks": 4,
+      "deliverables": [
+        "핵심 기능",
+        "단위 테스트"
+      ]
+    },
+    {
+      "name": "테스트 및 배포",
+      "description": "통합 테스트 및 배포",
+      "duration_weeks": 2,
+      "deliverables": [
+        "테스트 보고서",
+        "배포 시스템"
+      ]
+    }
+  ],
+  "milestones": [
+    {
+      "name": "설계 완료",
+      "description": "시스템 설계 및 계획 완료",
+      "target_date": "2주차",
+      "criteria": [
+        "설계 문서 완성",
+        "팀 승인"
+      ]
+    },
+    {
+      "name": "MVP 완성",
+      "description": "최소 기능 제품 완성",
+      "target_date": "6주차",
+      "criteria": [
+        "핵심 기능 구현",
+        "기본 테스트 통과"
+      ]
+    }
+  ],
+  "tasks": [],
+  "dependencies": [],
+  "tech_stack": {
+    "frontend": [
+      "React",
+      "HTML",
+      "CSS"
+    ],
+    "backend": [
+      "Node.js",
+      "Express"
+    ],
+    "database": [
+      "MongoDB"
+    ],
+    "tools": [
+      "Git",
+      "Jest"
+    ]
+  },
+  "resources": {
+    "team_members": [],
+    "budget": null,
+    "timeline": {
+      "start_date": "2025-06-27T02:06:27.045Z",
+      "end_date": "2025-08-22T02:06:27.044Z",
+      "buffer_time": 2
+    }
+  },
+  "risk_assessment": [
+    {
+      "risk": "기술적 복잡도",
+      "probability": "MEDIUM",
+      "impact": "MEDIUM",
+      "mitigation": "충분한 학습 시간 확보"
+    }
+  ],
+  "mitigation_strategies": [
+    "충분한 학습 시간 확보"
+  ],
+  "quality_gates": [
+    {
+      "phase": "개발",
+      "criteria": [
+        "코드 리뷰",
+        "단위 테스트 90% 이상"
+      ],
+      "tools": [
+        "ESLint",
+        "Jest"
+      ]
+    }
+  ],
+  "testing_strategy": {
+    "unit_testing": true,
+    "integration_testing": true,
+    "e2e_testing": false,
+    "performance_testing": false
+  },
+  "progress": {
+    "overall_completion": 0,
+    "phase_completion": {},
+    "milestone_status": {},
+    "task_completion": {}
+  },
+  "settings": {
+    "auto_update": true,
+    "ai_monitoring": true,
+    "notification_level": "normal"
+  }
+}

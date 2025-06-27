@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 실시간 페어 프로그래밍</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            overflow: hidden;
+        }
+
+        .main-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #1e1e1e;
+        }
+
+        .toolbar {
+            height: 50px;
+            background: #333;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 15px;
+            border-bottom: 1px solid #555;
+        }
+
+        .toolbar button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .toolbar button:hover {
+            background: #45a049;
+        }
+
+        .toolbar button.danger {
+            background: #f44336;
+        }
+
+        .toolbar button.danger:hover {
+            background: #da190b;
+        }
+
+        .coding-area {
+            flex: 1;
+            display: flex;
+        }
+
+        .code-editor {
+            flex: 2;
+            background: #1e1e1e;
+            position: relative;
+        }
+
+        .chat-panel {
+            width: 350px;
+            background: #2d2d2d;
+            border-left: 1px solid #555;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .session-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .session-info h3 {
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .participants {
+            margin-top: 20px;
+        }
+
+        .participant {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            color: white;
+        }
+
+        .participant-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #4CAF50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .participant.online {
+            opacity: 1;
+        }
+
+        .participant.offline {
+            opacity: 0.5;
+        }
+
+        .ai-suggestions {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .suggestion {
+            background: rgba(76, 175, 80, 0.1);
+            border-left: 3px solid #4CAF50;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .suggestion.warning {
+            background: rgba(255, 152, 0, 0.1);
+            border-left-color: #ff9800;
+        }
+
+        .suggestion.error {
+            background: rgba(244, 67, 54, 0.1);
+            border-left-color: #f44336;
+        }
+
+        #code-textarea {
+            width: 100%;
+            height: 100%;
+            background: #1e1e1e;
+            color: #f8f8f2;
+            border: none;
+            padding: 20px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+        }
+
+        .cursors-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .remote-cursor {
+            position: absolute;
+            width: 2px;
+            height: 20px;
+            background: #ff6b6b;
+            opacity: 0.8;
+        }
+
+        .cursor-label {
+            position: absolute;
+            top: -25px;
+            left: 0;
+            background: #ff6b6b;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .chat-header {
+            background: #333;
+            padding: 15px;
+            border-bottom: 1px solid #555;
+            color: white;
+            font-weight: bold;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+
+        .message.user {
+            background: #4CAF50;
+            color: white;
+            margin-left: auto;
+        }
+
+        .message.ai {
+            background: #2196F3;
+            color: white;
+        }
+
+        .message.system {
+            background: #666;
+            color: white;
+            font-style: italic;
+            text-align: center;
+            max-width: 100%;
+        }
+
+        .message-author {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .chat-input-container {
+            padding: 15px;
+            border-top: 1px solid #555;
+        }
+
+        .chat-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            background: #1e1e1e;
+            color: white;
+            font-size: 14px;
+        }
+
+        .status-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            border-radius: 20px;
+            color: white;
+            font-weight: bold;
+            z-index: 1000;
+        }
+
+        .status-indicator.connected {
+            background: #4CAF50;
+        }
+
+        .status-indicator.disconnected {
+            background: #f44336;
+        }
+
+        .status-indicator.connecting {
+            background: #ff9800;
+        }
+
+        .session-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .session-controls button {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #2196F3;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #666;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        .floating-ai-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 8px;
+            padding: 15px;
+            color: white;
+            display: none;
+            z-index: 1000;
+        }
+
+        .floating-ai-panel.show {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .ai-thinking {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #4CAF50;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 3px;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #4CAF50;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        .autocomplete-popup {
+            position: absolute;
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            z-index: 100;
+        }
+
+        .autocomplete-item {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #555;
+            color: white;
+        }
+
+        .autocomplete-item:hover {
+            background: #4CAF50;
+        }
+
+        .autocomplete-item.selected {
+            background: #2196F3;
+        }
+    </style>
+</head>
+<body>
+    <div class="status-indicator" id="status-indicator">연결 중...</div>
+    
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="session-info">
+                <h3>🤝 페어 프로그래밍</h3>
+                <div id="session-id">세션 ID: -</div>
+                <div id="project-info">프로젝트: -</div>
+                <div id="language-info">언어: -</div>
+                
+                <div class="session-controls">
+                    <button class="btn-primary" onclick="startNewSession()">새 세션</button>
+                    <button class="btn-secondary" onclick="joinSession()">세션 참가</button>
+                    <button class="btn-danger" onclick="endSession()">세션 종료</button>
+                </div>
+            </div>
+
+            <div class="participants">
+                <h4 style="color: white; margin-bottom: 10px;">👥 참가자</h4>
+                <div id="participants-list">
+                    <!-- 참가자 목록이 여기에 동적으로 추가됩니다 -->
+                </div>
+            </div>
+
+            <div class="ai-suggestions">
+                <h4 style="color: white; margin-bottom: 10px;">🤖 AI 제안</h4>
+                <div id="suggestions-list">
+                    <div class="suggestion">
+                        AI가 실시간으로 코드를 분석하고 제안을 제공합니다.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="editor-container">
+            <div class="toolbar">
+                <select id="language-select">
+                    <option value="javascript">JavaScript</option>
+                    <option value="python">Python</option>
+                    <option value="java">Java</option>
+                    <option value="cpp">C++</option>
+                    <option value="html">HTML</option>
+                    <option value="css">CSS</option>
+                </select>
+                
+                <input type="text" id="filename-input" placeholder="파일명을 입력하세요..." 
+                       style="padding: 8px; border: 1px solid #555; background: #1e1e1e; color: white; border-radius: 4px;">
+                
+                <button onclick="requestAIHelp()">🤖 AI 도움</button>
+                <button onclick="formatCode()">✨ 포맷팅</button>
+                <button onclick="analyzeCode()">🔍 분석</button>
+                <button onclick="toggleAIPanel()">💬 AI 채팅</button>
+            </div>
+
+            <div class="coding-area">
+                <div class="code-editor">
+                    <div class="cursors-overlay" id="cursors-overlay"></div>
+                    <textarea id="code-textarea" placeholder="여기서 협업 코딩을 시작하세요...
+
+// 예시: JavaScript 함수
+function greetUser(name) {
+    return `안녕하세요, ${name}님!`;
+}
+
+console.log(greetUser('AI 개발자'));
+
+// AI와 함께 실시간으로 코딩해보세요!
+// @ai 로 시작하여 AI에게 질문할 수 있습니다."></textarea>
+                    
+                    <div class="autocomplete-popup" id="autocomplete-popup">
+                        <!-- 자동완성 항목들이 여기에 동적으로 추가됩니다 -->
+                    </div>
+                </div>
+
+                <div class="chat-panel">
+                    <div class="chat-header">💬 실시간 채팅</div>
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="message system">
+                            <div class="message-author">시스템</div>
+                            실시간 페어 프로그래밍에 오신 것을 환영합니다!<br>
+                            @ai로 시작하여 AI와 대화할 수 있습니다.
+                        </div>
+                    </div>
+                    <div class="chat-input-container">
+                        <input type="text" class="chat-input" id="chat-input" 
+                               placeholder="메시지를 입력하세요... (@ai로 AI 호출)"
+                               onkeypress="handleChatKeyPress(event)">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="floating-ai-panel" id="floating-ai-panel">
+        <div class="ai-thinking" id="ai-thinking" style="display: none;">
+            <span>🤖 AI가 생각 중입니다</span>
+            <div class="typing-indicator">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        </div>
+        <div id="ai-response"></div>
+        <button onclick="closeAIPanel()" style="margin-top: 10px; padding: 5px 10px; background: #666; color: white; border: none; border-radius: 3px; cursor: pointer;">닫기</button>
+    </div>
+
+    <script>
+        // 전역 변수들
+        let ws = null;
+        let currentSessionId = null;
+        let currentUserId = `user_${Date.now()}`;
+        let currentUserName = `Developer_${Math.floor(Math.random() * 1000)}`;
+        let isConnected = false;
+        let participantCursors = new Map();
+        let aiTypingTimeout = null;
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeWebSocket();
+            initializeCodeEditor();
+            updateUI();
+        });
+
+        // WebSocket 연결 초기화
+        function initializeWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}`;
+            
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = function() {
+                console.log('WebSocket 연결됨');
+                isConnected = true;
+                updateStatusIndicator('connected', '연결됨');
+            };
+            
+            ws.onmessage = function(event) {
+                const message = JSON.parse(event.data);
+                handleWebSocketMessage(message);
+            };
+            
+            ws.onclose = function() {
+                console.log('WebSocket 연결 종료됨');
+                isConnected = false;
+                updateStatusIndicator('disconnected', '연결 끊김');
+                
+                // 재연결 시도
+                setTimeout(initializeWebSocket, 3000);
+            };
+            
+            ws.onerror = function(error) {
+                console.error('WebSocket 오류:', error);
+                updateStatusIndicator('disconnected', '연결 오류');
+            };
+        }
+
+        // WebSocket 메시지 처리
+        function handleWebSocketMessage(message) {
+            const { type, data } = message;
+            
+            switch (type) {
+                case 'session_joined':
+                    handleSessionJoined(message);
+                    break;
+                case 'participant_joined':
+                    addParticipant(message.participant);
+                    addSystemMessage(`${message.participant.userName}님이 참가했습니다.`);
+                    break;
+                case 'participant_left':
+                    removeParticipant(message.userId);
+                    addSystemMessage(`${message.userName}님이 나갔습니다.`);
+                    break;
+                case 'code_changed':
+                    handleCodeChange(message.data);
+                    break;
+                case 'cursor_moved':
+                    updateRemoteCursor(message.data);
+                    break;
+                case 'chat_message':
+                    addChatMessage(message.data);
+                    break;
+                case 'ai_response':
+                    addChatMessage(message.data);
+                    break;
+                case 'ai_mention_response':
+                    addChatMessage(message.data);
+                    break;
+                case 'ai_analysis':
+                    showAISuggestion(message.data);
+                    break;
+                case 'file_selected':
+                    handleFileSelection(message.data);
+                    break;
+                case 'error':
+                    console.error('서버 오류:', message.message);
+                    break;
+            }
+        }
+
+        // 새 세션 시작
+        async function startNewSession() {
+            const projectType = prompt('프로젝트 타입을 입력하세요:', 'web-app');
+            const language = document.getElementById('language-select').value;
+            const goals = prompt('목표를 입력하세요 (쉼표로 구분):', '기능 구현, 코드 개선').split(',').map(g => g.trim());
+            
+            if (!projectType) return;
+            
+            try {
+                const response = await fetch('/api/v1/pair-programming/start-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: currentUserId,
+                        projectType,
+                        language,
+                        goals
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentSessionId = result.sessionId;
+                    joinWebSocketSession();
+                    updateSessionInfo(projectType, language);
+                    addSystemMessage(result.welcomeMessage);
+                } else {
+                    alert('세션 시작 실패: ' + result.error);
+                }
+            } catch (error) {
+                console.error('세션 시작 오류:', error);
+                alert('세션을 시작할 수 없습니다.');
+            }
+        }
+
+        // 세션 참가
+        function joinSession() {
+            const sessionId = prompt('참가할 세션 ID를 입력하세요:');
+            if (!sessionId) return;
+            
+            currentSessionId = sessionId;
+            joinWebSocketSession();
+        }
+
+        // WebSocket 세션 참가
+        function joinWebSocketSession() {
+            if (!ws || !currentSessionId) return;
+            
+            const message = {
+                type: 'join_session',
+                sessionId: currentSessionId,
+                data: {
+                    userId: currentUserId,
+                    userName: currentUserName
+                }
+            };
+            
+            ws.send(JSON.stringify(message));
+        }
+
+        // 세션 종료
+        async function endSession() {
+            if (!currentSessionId) return;
+            
+            if (!confirm('세션을 종료하시겠습니까?')) return;
+            
+            try {
+                const response = await fetch('/api/v1/pair-programming/end-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId: currentSessionId })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    addSystemMessage('세션이 종료되었습니다.');
+                    currentSessionId = null;
+                    updateUI();
+                } else {
+                    alert('세션 종료 실패: ' + result.error);
+                }
+            } catch (error) {
+                console.error('세션 종료 오류:', error);
+            }
+        }
+
+        // 코드 에디터 초기화
+        function initializeCodeEditor() {
+            const textarea = document.getElementById('code-textarea');
+            let typingTimer = null;
+            
+            textarea.addEventListener('input', function() {
+                clearTimeout(typingTimer);
+                
+                // 실시간 코드 변경 전송
+                typingTimer = setTimeout(() => {
+                    sendCodeChange();
+                }, 500);
+                
+                // 커서 위치 전송
+                sendCursorPosition();
+                
+                // 자동완성 체크
+                checkAutocompletion();
+            });
+            
+            textarea.addEventListener('keydown', function(e) {
+                // 탭 키 처리 (들여쓰기)
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    const start = textarea.selectionStart;
+                    const end = textarea.selectionEnd;
+                    textarea.value = textarea.value.substring(0, start) + '    ' + textarea.value.substring(end);
+                    textarea.selectionStart = textarea.selectionEnd = start + 4;
+                    sendCodeChange();
+                }
+            });
+            
+            textarea.addEventListener('click', sendCursorPosition);
+            textarea.addEventListener('keyup', sendCursorPosition);
+        }
+
+        // 코드 변경 전송
+        function sendCodeChange() {
+            if (!ws || !currentSessionId) return;
+            
+            const textarea = document.getElementById('code-textarea');
+            const filename = document.getElementById('filename-input').value || 'untitled.js';
+            
+            const message = {
+                type: 'code_change',
+                sessionId: currentSessionId,
+                data: {
+                    code: textarea.value,
+                    fileName: filename,
+                    change: {
+                        type: 'edit',
+                        timestamp: new Date().toISOString()
+                    },
+                    cursorPosition: textarea.selectionStart
+                }
+            };
+            
+            ws.send(JSON.stringify(message));
+        }
+
+        // 커서 위치 전송
+        function sendCursorPosition() {
+            if (!ws || !currentSessionId) return;
+            
+            const textarea = document.getElementById('code-textarea');
+            const text = textarea.value;
+            const position = textarea.selectionStart;
+            
+            // 줄과 컬럼 계산
+            const lines = text.substring(0, position).split('\n');
+            const line = lines.length - 1;
+            const column = lines[lines.length - 1].length;
+            
+            const message = {
+                type: 'cursor_position',
+                sessionId: currentSessionId,
+                data: {
+                    line,
+                    column,
+                    selection: {
+                        start: textarea.selectionStart,
+                        end: textarea.selectionEnd
+                    }
+                }
+            };
+            
+            ws.send(JSON.stringify(message));
+        }
+
+        // 채팅 메시지 전송
+        function sendChatMessage(message) {
+            if (!ws || !currentSessionId) return;
+            
+            const chatMessage = {
+                type: 'chat_message',
+                sessionId: currentSessionId,
+                data: { message }
+            };
+            
+            ws.send(JSON.stringify(chatMessage));
+        }
+
+        // AI 도움 요청
+        async function requestAIHelp() {
+            const request = prompt('AI에게 무엇을 요청하시겠습니까?', '현재 코드를 개선해주세요');
+            if (!request) return;
+            
+            showAIThinking();
+            
+            try {
+                const response = await fetch('/api/v1/pair-programming/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionId: currentSessionId,
+                        message: request,
+                        context: document.getElementById('code-textarea').value
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAIResponse(result.response);
+                } else {
+                    alert('AI 요청 실패: ' + result.error);
+                }
+            } catch (error) {
+                console.error('AI 요청 오류:', error);
+                alert('AI 요청을 처리할 수 없습니다.');
+            } finally {
+                hideAIThinking();
+            }
+        }
+
+        // 코드 분석
+        async function analyzeCode() {
+            const code = document.getElementById('code-textarea').value;
+            const filename = document.getElementById('filename-input').value || 'untitled.js';
+            
+            if (!code.trim()) {
+                alert('분석할 코드가 없습니다.');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/v1/pair-programming/analyze-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionId: currentSessionId,
+                        code,
+                        fileName: filename,
+                        action: 'manual_analysis'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAnalysisResults(result);
+                } else {
+                    alert('코드 분석 실패: ' + result.error);
+                }
+            } catch (error) {
+                console.error('코드 분석 오류:', error);
+                alert('코드 분석을 수행할 수 없습니다.');
+            }
+        }
+
+        // 코드 포맷팅
+        function formatCode() {
+            // 간단한 JavaScript 포맷팅 (실제 프로덕션에서는 prettier 등을 사용)
+            const textarea = document.getElementById('code-textarea');
+            let code = textarea.value;
+            
+            // 기본적인 들여쓰기 정리
+            code = code.replace(/\s+$/gm, ''); // 줄 끝 공백 제거
+            code = code.replace(/^\s*\n/gm, '\n'); // 빈 줄 정리
+            
+            textarea.value = code;
+            sendCodeChange();
+        }
+
+        // 자동완성 체크
+        async function checkAutocompletion() {
+            const textarea = document.getElementById('code-textarea');
+            const code = textarea.value;
+            const position = textarea.selectionStart;
+            
+            // 현재 단어 추출
+            const beforeCursor = code.substring(0, position);
+            const currentWord = beforeCursor.split(/\s+/).pop();
+            
+            if (currentWord.length < 2) {
+                hideAutocomplete();
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/v1/pair-programming/autocomplete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionId: currentSessionId,
+                        partialCode: beforeCursor,
+                        cursorPosition: position,
+                        language: document.getElementById('language-select').value
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.completion.completions.length > 0) {
+                    showAutocomplete(result.completion.completions, textarea);
+                } else {
+                    hideAutocomplete();
+                }
+            } catch (error) {
+                console.error('자동완성 오류:', error);
+            }
+        }
+
+        // UI 업데이트 함수들
+        function updateStatusIndicator(status, text) {
+            const indicator = document.getElementById('status-indicator');
+            indicator.className = `status-indicator ${status}`;
+            indicator.textContent = text;
+        }
+
+        function updateSessionInfo(projectType, language) {
+            document.getElementById('session-id').textContent = `세션 ID: ${currentSessionId}`;
+            document.getElementById('project-info').textContent = `프로젝트: ${projectType}`;
+            document.getElementById('language-info').textContent = `언어: ${language}`;
+        }
+
+        function addParticipant(participant) {
+            const participantsList = document.getElementById('participants-list');
+            
+            const participantDiv = document.createElement('div');
+            participantDiv.className = 'participant online';
+            participantDiv.id = `participant-${participant.userId}`;
+            
+            const avatar = participant.userName.charAt(0).toUpperCase();
+            participantDiv.innerHTML = `
+                <div class="participant-avatar">${avatar}</div>
+                <div>${participant.userName}</div>
+            `;
+            
+            participantsList.appendChild(participantDiv);
+        }
+
+        function removeParticipant(userId) {
+            const participantElement = document.getElementById(`participant-${userId}`);
+            if (participantElement) {
+                participantElement.remove();
+            }
+            
+            // 커서도 제거
+            if (participantCursors.has(userId)) {
+                const cursorElement = document.getElementById(`cursor-${userId}`);
+                if (cursorElement) {
+                    cursorElement.remove();
+                }
+                participantCursors.delete(userId);
+            }
+        }
+
+        function addChatMessage(messageData) {
+            const messagesContainer = document.getElementById('chat-messages');
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${messageData.type}`;
+            
+            const authorDiv = document.createElement('div');
+            authorDiv.className = 'message-author';
+            authorDiv.textContent = messageData.userName;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.textContent = messageData.message;
+            
+            messageDiv.appendChild(authorDiv);
+            messageDiv.appendChild(contentDiv);
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function addSystemMessage(message) {
+            const messagesContainer = document.getElementById('chat-messages');
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message system';
+            
+            const authorDiv = document.createElement('div');
+            authorDiv.className = 'message-author';
+            authorDiv.textContent = '시스템';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.textContent = message;
+            
+            messageDiv.appendChild(authorDiv);
+            messageDiv.appendChild(contentDiv);
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function showAISuggestion(data) {
+            const suggestionsList = document.getElementById('suggestions-list');
+            
+            const suggestionDiv = document.createElement('div');
+            suggestionDiv.className = 'suggestion';
+            suggestionDiv.innerHTML = `
+                <strong>📁 ${data.fileName}</strong><br>
+                ${data.analysis}
+                <small style="display: block; margin-top: 5px; opacity: 0.7;">
+                    ${new Date(data.timestamp).toLocaleTimeString()}
+                </small>
+            `;
+            
+            suggestionsList.appendChild(suggestionDiv);
+            
+            // 최대 5개 제안만 유지
+            const suggestions = suggestionsList.querySelectorAll('.suggestion');
+            if (suggestions.length > 5) {
+                suggestions[0].remove();
+            }
+        }
+
+        function updateRemoteCursor(cursorData) {
+            const cursorsOverlay = document.getElementById('cursors-overlay');
+            const textarea = document.getElementById('code-textarea');
+            
+            let cursorElement = document.getElementById(`cursor-${cursorData.userId}`);
+            
+            if (!cursorElement) {
+                cursorElement = document.createElement('div');
+                cursorElement.id = `cursor-${cursorData.userId}`;
+                cursorElement.className = 'remote-cursor';
+                
+                const label = document.createElement('div');
+                label.className = 'cursor-label';
+                label.textContent = cursorData.userName;
+                cursorElement.appendChild(label);
+                
+                cursorsOverlay.appendChild(cursorElement);
+            }
+            
+            // 커서 위치 계산 (간단화된 버전)
+            const lineHeight = 22; // 대략적인 줄 높이
+            const charWidth = 8; // 대략적인 문자 너비
+            
+            const x = cursorData.column * charWidth + 20; // 패딩 고려
+            const y = cursorData.line * lineHeight + 20;
+            
+            cursorElement.style.left = `${x}px`;
+            cursorElement.style.top = `${y}px`;
+            
+            participantCursors.set(cursorData.userId, cursorData);
+        }
+
+        function handleSessionJoined(message) {
+            const { sessionId, currentState } = message;
+            currentSessionId = sessionId;
+            
+            // 현재 코드 상태 동기화
+            if (currentState.code) {
+                document.getElementById('code-textarea').value = currentState.code;
+            }
+            
+            // 참가자 목록 업데이트
+            const participantsList = document.getElementById('participants-list');
+            participantsList.innerHTML = '';
+            
+            currentState.participants.forEach(participant => {
+                addParticipant(participant);
+            });
+            
+            // 채팅 기록 로드
+            currentState.chatHistory.forEach(message => {
+                addChatMessage(message);
+            });
+            
+            addSystemMessage(`세션 ${sessionId}에 참가했습니다.`);
+        }
+
+        function handleCodeChange(data) {
+            const textarea = document.getElementById('code-textarea');
+            const filenameInput = document.getElementById('filename-input');
+            
+            // 현재 사용자가 보낸 변경사항이 아닌 경우에만 업데이트
+            if (data.author.userId !== currentUserId) {
+                const currentCursor = textarea.selectionStart;
+                textarea.value = data.code;
+                
+                if (data.fileName) {
+                    filenameInput.value = data.fileName;
+                }
+                
+                // 커서 위치 복원 (간단한 버전)
+                textarea.selectionStart = textarea.selectionEnd = currentCursor;
+            }
+        }
+
+        function handleFileSelection(data) {
+            const textarea = document.getElementById('code-textarea');
+            const filenameInput = document.getElementById('filename-input');
+            
+            if (data.selectedBy.userId !== currentUserId) {
+                textarea.value = data.content || '';
+                filenameInput.value = data.fileName || '';
+                
+                addSystemMessage(`${data.selectedBy.userName}님이 파일 ${data.fileName}을 선택했습니다.`);
+            }
+        }
+
+        function showAIThinking() {
+            document.getElementById('ai-thinking').style.display = 'flex';
+            document.getElementById('floating-ai-panel').classList.add('show');
+        }
+
+        function hideAIThinking() {
+            document.getElementById('ai-thinking').style.display = 'none';
+        }
+
+        function showAIResponse(response) {
+            document.getElementById('ai-response').textContent = response;
+            document.getElementById('floating-ai-panel').classList.add('show');
+        }
+
+        function closeAIPanel() {
+            document.getElementById('floating-ai-panel').classList.remove('show');
+        }
+
+        function toggleAIPanel() {
+            const panel = document.getElementById('floating-ai-panel');
+            panel.classList.toggle('show');
+        }
+
+        function showAutocomplete(completions, textarea) {
+            const popup = document.getElementById('autocomplete-popup');
+            popup.innerHTML = '';
+            
+            completions.forEach((completion, index) => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                if (index === 0) item.classList.add('selected');
+                
+                item.innerHTML = `
+                    <strong>${completion.text}</strong>
+                    <br><small>${completion.description}</small>
+                `;
+                
+                item.onclick = () => {
+                    applyCompletion(completion.text, textarea);
+                    hideAutocomplete();
+                };
+                
+                popup.appendChild(item);
+            });
+            
+            // 팝업 위치 계산
+            const rect = textarea.getBoundingClientRect();
+            popup.style.left = `${rect.left}px`;
+            popup.style.top = `${rect.top + 100}px`;
+            popup.style.display = 'block';
+        }
+
+        function hideAutocomplete() {
+            document.getElementById('autocomplete-popup').style.display = 'none';
+        }
+
+        function applyCompletion(completion, textarea) {
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = textarea.value;
+            
+            // 현재 단어 찾기
+            const beforeCursor = text.substring(0, start);
+            const words = beforeCursor.split(/\s+/);
+            const currentWord = words[words.length - 1];
+            const wordStart = start - currentWord.length;
+            
+            // 완성된 텍스트로 교체
+            textarea.value = text.substring(0, wordStart) + completion + text.substring(end);
+            textarea.selectionStart = textarea.selectionEnd = wordStart + completion.length;
+            
+            sendCodeChange();
+        }
+
+        function showAnalysisResults(result) {
+            let analysisText = '코드 분석 결과:\n\n';
+            
+            if (result.analysis) {
+                analysisText += `분석: ${JSON.stringify(result.analysis, null, 2)}\n\n`;
+            }
+            
+            if (result.feedback) {
+                analysisText += `피드백: ${result.feedback}\n\n`;
+            }
+            
+            if (result.suggestions && result.suggestions.length > 0) {
+                analysisText += '제안사항:\n';
+                result.suggestions.forEach((suggestion, index) => {
+                    analysisText += `${index + 1}. [${suggestion.priority}] ${suggestion.message}\n`;
+                });
+            }
+            
+            alert(analysisText);
+        }
+
+        function handleChatKeyPress(event) {
+            if (event.key === 'Enter') {
+                const input = event.target;
+                const message = input.value.trim();
+                
+                if (message) {
+                    sendChatMessage(message);
+                    input.value = '';
+                }
+            }
+        }
+
+        function updateUI() {
+            // UI 상태 업데이트
+            const hasSession = !!currentSessionId;
+            
+            // 세션 관련 버튼들 상태 업데이트
+            const sessionControls = document.querySelectorAll('.session-controls button');
+            sessionControls.forEach(button => {
+                if (button.textContent.includes('새 세션') || button.textContent.includes('세션 참가')) {
+                    button.disabled = hasSession;
+                } else if (button.textContent.includes('세션 종료')) {
+                    button.disabled = !hasSession;
+                }
+            });
+        }
+
+        // 페이지 언로드 시 정리
+        window.addEventListener('beforeunload', function() {
+            if (ws && currentSessionId) {
+                const message = {
+                    type: 'leave_session',
+                    sessionId: currentSessionId
+                };
+                ws.send(JSON.stringify(message));
+            }
+        });
+    </script>
+</body>
+</html>

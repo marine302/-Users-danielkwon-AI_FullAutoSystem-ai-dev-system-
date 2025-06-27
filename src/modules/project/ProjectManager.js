@@ -2,12 +2,14 @@ import path from 'path';
 import fs from 'fs/promises';
 import AIService from '../ai/AIService.js';
 import AutomationService from '../automation/AutomationService.js';
+import DatabaseService from '../../services/DatabaseService.js';
 
 class ProjectManager {
   constructor() {
     this.aiService = new AIService();
     this.automationService = new AutomationService();
     this.projects = new Map();
+    this.db = new DatabaseService();
   }
 
   /**
@@ -65,7 +67,30 @@ class ProjectManager {
         status: 'created'
       };
 
+      // 메모리에 저장
       this.projects.set(projectInfo.id, projectInfo);
+
+      // 데이터베이스에 저장
+      try {
+        this.db.saveProject({
+          id: projectInfo.id,
+          name: projectInfo.name,
+          description: projectInfo.description,
+          type: projectInfo.type,
+          language: projectStructure.language || 'javascript',
+          framework: projectStructure.framework || null,
+          status: 'active',
+          metadata: {
+            path: fullProjectPath,
+            structure: projectStructure,
+            features: features,
+            createdAt: projectInfo.createdAt
+          }
+        });
+        console.log(`💾 프로젝트 정보 데이터베이스 저장 완료: ${name}`);
+      } catch (dbError) {
+        console.warn(`⚠️ 데이터베이스 저장 실패: ${dbError.message}`);
+      }
 
       console.log(`✅ 프로젝트 생성 완료: ${name}`);
       return projectInfo;
@@ -279,8 +304,32 @@ class ProjectManager {
    * 프로젝트 목록 조회
    * @returns {Array} 프로젝트 목록
    */
-  getProjects() {
-    return Array.from(this.projects.values());
+  getProjects(filters = {}) {
+    try {
+      // 데이터베이스에서 프로젝트 조회
+      const dbProjects = this.db.getAllProjects(filters);
+      
+      // 메모리의 프로젝트와 병합 (메모리가 더 최신일 수 있음)
+      const memoryProjects = Array.from(this.projects.values());
+      
+      // 중복 제거하고 최신 정보 유지
+      const projectMap = new Map();
+      
+      // 데이터베이스 프로젝트 먼저 추가
+      dbProjects.forEach(project => {
+        projectMap.set(project.id, project);
+      });
+      
+      // 메모리 프로젝트로 덮어쓰기 (더 최신)
+      memoryProjects.forEach(project => {
+        projectMap.set(project.id, project);
+      });
+      
+      return Array.from(projectMap.values());
+    } catch (error) {
+      console.warn('데이터베이스에서 프로젝트 조회 실패, 메모리에서 반환:', error.message);
+      return Array.from(this.projects.values());
+    }
   }
 
   /**
@@ -289,7 +338,20 @@ class ProjectManager {
    * @returns {Object} 프로젝트 정보
    */
   getProject(projectId) {
-    return this.projects.get(projectId);
+    try {
+      // 메모리에서 먼저 확인
+      let project = this.projects.get(projectId);
+      
+      if (!project) {
+        // 데이터베이스에서 조회
+        project = this.db.getProject(projectId);
+      }
+      
+      return project;
+    } catch (error) {
+      console.warn('프로젝트 조회 실패:', error.message);
+      return this.projects.get(projectId);
+    }
   }
 
   // 유틸리티 메서드들
