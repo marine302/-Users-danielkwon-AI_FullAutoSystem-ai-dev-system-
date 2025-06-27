@@ -3,6 +3,11 @@ import config from '../../../config/index.js';
 
 class AIService {
   constructor() {
+    // 싱글톤 인스턴스가 이미 있으면 반환
+    if (AIService.instance) {
+      return AIService.instance;
+    }
+    
     // OpenAI API 키가 있을 때만 클라이언트 초기화
     if (config.ai.openaiApiKey && config.ai.openaiApiKey !== 'your-openai-api-key-here') {
       this.openai = new OpenAI({
@@ -12,12 +17,19 @@ class AIService {
     } else {
       this.openai = null;
       this.isEnabled = false;
-      console.warn('⚠️  OpenAI API 키가 설정되지 않았습니다. AI 기능이 제한됩니다.');
+      // 경고 메시지를 한 번만 출력하도록 제한
+      if (!AIService.warningShown) {
+        console.warn('⚠️  OpenAI API 키가 설정되지 않았습니다. AI 기능이 제한됩니다.');
+        AIService.warningShown = true;
+      }
     }
     
     this.defaultModel = config.ai.defaultModel;
     this.maxTokens = config.ai.maxTokens;
     this.temperature = config.ai.temperature;
+    
+    // 싱글톤 인스턴스 저장
+    AIService.instance = this;
   }
 
   /**
@@ -248,6 +260,10 @@ ${type} 문서를 생성해주세요.
     });
   }
 }
+
+// 싱글톤 패턴을 위한 정적 변수들
+AIService.instance = null;
+AIService.warningShown = false;
 
 export { AIService };
 export default AIService;
