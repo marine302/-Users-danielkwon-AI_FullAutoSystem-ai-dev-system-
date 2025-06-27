@@ -138,13 +138,14 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// 정적 파일 서빙
-app.use('/static', express.static(join(__dirname, '../public')));
-app.use(express.static(join(__dirname, '../public'))); // 루트에서도 정적 파일 서빙
-
-// API 라우트
-app.get('/', (req, res) => {
-  res.sendFile(join(__dirname, '../public/index.html'));
+// 헬스체크 엔드포인트 (정적 파일보다 먼저)
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    timestamp: new Date().toISOString()
+  });
 });
 
 // API 정보 엔드포인트 (JSON)
@@ -157,14 +158,13 @@ app.get('/api', (req, res) => {
   });
 });
 
-// 헬스체크 엔드포인트
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'healthy',
-    uptime: process.uptime(),
-    memory: process.memoryUsage(),
-    timestamp: new Date().toISOString()
-  });
+// 정적 파일 서빙
+app.use('/static', express.static(join(__dirname, '../public')));
+app.use(express.static(join(__dirname, '../public'))); // 루트에서도 정적 파일 서빙
+
+// API 라우트
+app.get('/', (req, res) => {
+  res.sendFile(join(__dirname, '../public/index.html'));
 });
 
 // HTML 페이지 라우트들
@@ -176,11 +176,11 @@ app.get('/pair-programming', (req, res) => {
   res.sendFile(join(__dirname, '../public/pair-programming.html'));
 });
 
-app.get('/monitoring', (req, res) => {
+app.get('/monitoring-dashboard', (req, res) => {
   res.sendFile(join(__dirname, '../public/monitoring-dashboard.html'));
 });
 
-app.get('/advanced', (req, res) => {
+app.get('/advanced-features', (req, res) => {
   res.sendFile(join(__dirname, '../public/advanced-features.html'));
 });
 
