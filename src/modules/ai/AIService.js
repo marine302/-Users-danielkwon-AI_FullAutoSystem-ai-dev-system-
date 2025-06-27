@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import config from '../../../config/index.js';
 
 class AIService {
@@ -8,23 +9,46 @@ class AIService {
       return AIService.instance;
     }
     
-    // OpenAI API 키가 있을 때만 클라이언트 초기화
+    this.provider = config.ai.defaultProvider;
+    this.isEnabled = false;
+    
+    // OpenAI API 초기화
     if (config.ai.openaiApiKey && config.ai.openaiApiKey !== 'your-openai-api-key-here') {
       this.openai = new OpenAI({
         apiKey: config.ai.openaiApiKey
       });
-      this.isEnabled = true;
+      if (this.provider === 'openai') {
+        this.isEnabled = true;
+      }
     } else {
       this.openai = null;
-      this.isEnabled = false;
-      // 경고 메시지를 한 번만 출력하도록 제한
+    }
+    
+    // Google Gemini API 초기화
+    if (config.ai.geminiApiKey && config.ai.geminiApiKey !== 'your-gemini-api-key-here') {
+      this.gemini = new GoogleGenerativeAI(config.ai.geminiApiKey);
+      this.geminiModel = this.gemini.getGenerativeModel({ model: config.ai.geminiModel });
+      if (this.provider === 'gemini') {
+        this.isEnabled = true;
+      }
+    } else {
+      this.gemini = null;
+      this.geminiModel = null;
+    }
+    
+    // 경고 메시지 출력
+    if (!this.isEnabled) {
       if (!AIService.warningShown) {
-        console.warn('⚠️  OpenAI API 키가 설정되지 않았습니다. AI 기능이 제한됩니다.');
+        console.warn('⚠️  AI API 키가 설정되지 않았습니다. AI 기능이 제한됩니다.');
+        console.warn('💡  OpenAI 또는 Google Gemini API 키를 설정하세요.');
         AIService.warningShown = true;
       }
+    } else {
+      console.log(`✅ AI 서비스가 ${this.provider.toUpperCase()}로 활성화되었습니다.`);
     }
     
     this.defaultModel = config.ai.defaultModel;
+    this.geminiModelName = config.ai.geminiModel;
     this.maxTokens = config.ai.maxTokens;
     this.temperature = config.ai.temperature;
     
@@ -44,24 +68,75 @@ class AIService {
     }
 
     try {
-      const response = await this.openai.chat.completions.create({
-        model: options.model || this.defaultModel,
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        max_tokens: options.maxTokens || this.maxTokens,
-        temperature: options.temperature || this.temperature,
-        ...options
-      });
-
-      return response.choices[0].message.content;
+      const provider = options.provider || this.provider;
+      
+      if (provider === 'gemini' && this.geminiModel) {
+        return await this.generateTextWithGemini(prompt, options);
+      } else if (provider === 'openai' && this.openai) {
+        return await this.generateTextWithOpenAI(prompt, options);
+      } else {
+        // 기본 제공자가 사용 불가능하면 다른 제공자 시도
+        if (this.geminiModel) {
+          return await this.generateTextWithGemini(prompt, options);
+        } else if (this.openai) {
+          return await this.generateTextWithOpenAI(prompt, options);
+        } else {
+          return this.generateSmartDemoResponse(prompt);
+        }
+      }
     } catch (error) {
       console.error('AI 텍스트 생성 오류:', error);
-      throw new Error(`AI 텍스트 생성 실패: ${error.message}`);
+      // 실패 시 대체 제공자 시도
+      try {
+        if (this.provider === 'openai' && this.geminiModel) {
+          console.log('OpenAI 실패, Gemini로 재시도...');
+          return await this.generateTextWithGemini(prompt, options);
+        } else if (this.provider === 'gemini' && this.openai) {
+          console.log('Gemini 실패, OpenAI로 재시도...');
+          return await this.generateTextWithOpenAI(prompt, options);
+        }
+      } catch (fallbackError) {
+        console.error('대체 AI 제공자도 실패:', fallbackError);
+      }
+      
+      return this.generateSmartDemoResponse(prompt);
     }
+  }
+
+  /**
+   * OpenAI로 텍스트 생성
+   */
+  async generateTextWithOpenAI(prompt, options = {}) {
+    const response = await this.openai.chat.completions.create({
+      model: options.model || this.defaultModel,
+      messages: [
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      max_tokens: options.maxTokens || this.maxTokens,
+      temperature: options.temperature || this.temperature,
+      ...options
+    });
+
+    return response.choices[0].message.content;
+  }
+
+  /**
+   * Google Gemini로 텍스트 생성
+   */
+  async generateTextWithGemini(prompt, options = {}) {
+    const result = await this.geminiModel.generateContent({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: options.temperature || this.temperature,
+        maxOutputTokens: options.maxTokens || this.maxTokens,
+      },
+    });
+
+    const response = await result.response;
+    return response.text();
   }
 
   /**
@@ -596,82 +671,82 @@ class WebScraper:
     def scrape_page(self, url):
         """단일 페이지 스크래핑"""
         try:
-            response = self.session.get(url, timeout=10)
-            response.raise_for_status()
+            response = self.session.get(url, timeout=10);
+            response.raise_for_status();
             
-            soup = BeautifulSoup(response.content, 'html.parser')
-            return soup
+            soup = BeautifulSoup(response.content, 'html.parser');
+            return soup;
             
         except requests.RequestException as e:
-            print(f"페이지 요청 실패: {e}")
-            return None
+            print(f"페이지 요청 실패: {e}");
+            return None;
     
     def extract_data(self, soup):
         """데이터 추출 로직 (사이트에 맞게 수정 필요)"""
-        data = []
+        data = [];
         
         # 예시: 제목과 링크 추출
-        articles = soup.find_all('article', class_='post')
+        articles = soup.find_all('article', class_='post');
         
         for article in articles:
-            title_elem = article.find('h2', class_='title')
-            link_elem = article.find('a')
+            title_elem = article.find('h2', class_='title');
+            link_elem = article.find('a');
             
             if title_elem and link_elem:
                 data.append({
                     'title': title_elem.get_text(strip=True),
                     'link': link_elem.get('href'),
                     'scraped_at': time.strftime('%Y-%m-%d %H:%M:%S')
-                })
+                });
         
-        return data
+        return data;
     
     def save_to_csv(self, data, filename='scraped_data.csv'):
         """데이터를 CSV 파일로 저장"""
         if not data:
-            print("저장할 데이터가 없습니다.")
-            return
+            print("저장할 데이터가 없습니다.");
+            return;
         
         with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
-            fieldnames = data[0].keys()
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            fieldnames = data[0].keys();
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames);
             
-            writer.writeheader()
-            writer.writerows(data)
+            writer.writeheader();
+            writer.writerows(data);
         
-        print(f"데이터가 {filename}에 저장되었습니다.")
+        print(f"데이터가 {filename}에 저장되었습니다.");
     
     def scrape_multiple_pages(self, urls):
         """여러 페이지 스크래핑"""
-        all_data = []
+        all_data = [];
         
         for i, url in enumerate(urls, 1):
-            print(f"페이지 {i}/{len(urls)} 스크래핑 중: {url}")
+            print(f"페이지 {i}/{len(urls)} 스크래핑 중: {url}");
             
-            soup = self.scrape_page(url)
+            soup = self.scrape_page(url);
             if soup:
-                page_data = self.extract_data(soup)
-                all_data.extend(page_data)
+                page_data = self.extract_data(soup);
+                all_data.extend(page_data);
                 
                 # 서버 부하 방지를 위한 지연
-                time.sleep(self.delay)
+                time.sleep(self.delay);
         
-        return all_data
+        return all_data;
 
 # 사용 예시
 if __name__ == "__main__":
-    scraper = WebScraper("https://example.com", delay=2)
+    scraper = WebScraper("https://example.com", delay=2);
     
     urls = [
         "https://example.com/page1",
         "https://example.com/page2",
         "https://example.com/page3"
-    ]
+    ];
     
-    data = scraper.scrape_multiple_pages(urls)
-    scraper.save_to_csv(data, 'scraped_results.csv')
+    data = scraper.scrape_multiple_pages(urls);
+    scraper.save_to_csv(data, 'scraped_results.csv');
     
-    print(f"총 {len(data)}개의 항목을 스크래핑했습니다.")`;
+    print(f"총 {len(data)}개의 항목을 스크래핑했습니다.");`;
       }
       
       if (lowerDesc.includes('api') || lowerDesc.includes('플라스크') || lowerDesc.includes('flask')) {
@@ -698,124 +773,124 @@ def init_db():
                 email TEXT UNIQUE NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        ''')
-        conn.commit()
+        ''');
+        conn.commit();
 
 def get_db_connection():
     """데이터베이스 연결"""
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
-    return conn
+    conn = sqlite3.connect(DATABASE);
+    conn.row_factory = sqlite3.Row;
+    return conn;
 
 @app.route('/api/users', methods=['GET'])
 def get_users():
     """모든 사용자 조회"""
     try:
-        conn = get_db_connection()
-        users = conn.execute('SELECT * FROM users ORDER BY created_at DESC').fetchall()
-        conn.close()
+        conn = get_db_connection();
+        users = conn.execute('SELECT * FROM users ORDER BY created_at DESC').fetchall();
+        conn.close();
         
         return jsonify({
             'success': True,
             'data': [dict(user) for user in users],
             'count': len(users)
-        })
+        });
     except Exception as e:
         return jsonify({
             'success': False,
             'error': str(e)
-        }), 500
+        }), 500;
 
 @app.route('/api/users/<int:user_id>', methods=['GET'])
 def get_user(user_id):
     """특정 사용자 조회"""
     try:
-        conn = get_db_connection()
-        user = conn.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
-        conn.close()
+        conn = get_db_connection();
+        user = conn.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone();
+        conn.close();
         
         if user:
             return jsonify({
                 'success': True,
                 'data': dict(user)
-            })
+            });
         else:
             return jsonify({
                 'success': False,
                 'error': '사용자를 찾을 수 없습니다'
-            }), 404
+            }), 404;
             
     except Exception as e:
         return jsonify({
             'success': False,
             'error': str(e)
-        }), 500
+        }), 500;
 
 @app.route('/api/users', methods=['POST'])
 def create_user():
     """새 사용자 생성"""
     try:
-        data = request.get_json()
+        data = request.get_json();
         
         if not data or not data.get('name') or not data.get('email'):
             return jsonify({
                 'success': False,
                 'error': '이름과 이메일이 필요합니다'
-            }), 400
+            }), 400;
         
-        conn = get_db_connection()
+        conn = get_db_connection();
         cursor = conn.execute(
             'INSERT INTO users (name, email) VALUES (?, ?)',
             (data['name'], data['email'])
-        )
-        user_id = cursor.lastrowid
-        conn.commit()
+        );
+        user_id = cursor.lastrowid;
+        conn.commit();
         
         # 생성된 사용자 정보 조회
-        new_user = conn.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
-        conn.close()
+        new_user = conn.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone();
+        conn.close();
         
         return jsonify({
             'success': True,
             'data': dict(new_user)
-        }), 201
+        }), 201;
         
     except sqlite3.IntegrityError:
         return jsonify({
             'success': False,
             'error': '이미 존재하는 이메일입니다'
-        }), 400
+        }), 400;
     except Exception as e:
         return jsonify({
             'success': False,
             'error': str(e)
-        }), 500
+        }), 500;
 
 @app.route('/api/users/<int:user_id>', methods=['DELETE'])
 def delete_user(user_id):
     """사용자 삭제"""
     try:
-        conn = get_db_connection()
-        result = conn.execute('DELETE FROM users WHERE id = ?', (user_id,)).rowcount
-        conn.commit()
-        conn.close()
+        conn = get_db_connection();
+        result = conn.execute('DELETE FROM users WHERE id = ?', (user_id,)).rowcount;
+        conn.commit();
+        conn.close();
         
         if result:
             return jsonify({
                 'success': True,
                 'message': '사용자가 삭제되었습니다'
-            })
+            });
         else:
             return jsonify({
                 'success': False,
                 'error': '사용자를 찾을 수 없습니다'
-            }), 404
+            }), 404;
             
     except Exception as e:
         return jsonify({
             'success': False,
             'error': str(e)
-        }), 500
+        }), 500;
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
@@ -823,14 +898,14 @@ def health_check():
     return jsonify({
         'status': 'healthy',
         'timestamp': datetime.now().isoformat()
-    })
+    });
 
 if __name__ == '__main__':
     # 데이터베이스 초기화
-    init_db()
+    init_db();
     
     # 개발 서버 실행
-    app.run(debug=True, host='0.0.0.0', port=5000)`;
+    app.run(debug=True, host='0.0.0.0', port=5000);`;
       }
     }
     
@@ -1083,6 +1158,73 @@ ${type} 문서를 생성해주세요.
       temperature: 0.5
     });
   }
+
+  /**
+   * AI 서비스 상태 확인
+   * @returns {Object} 상태 정보
+   */
+  getStatus() {
+    return {
+      isEnabled: this.isEnabled,
+      provider: this.provider,
+      availableProviders: {
+        openai: !!this.openai,
+        gemini: !!this.geminiModel
+      },
+      models: {
+        openai: this.defaultModel,
+        gemini: this.geminiModelName
+      },
+      temperature: this.temperature,
+      maxTokens: this.maxTokens
+    };
+  }
+
+  /**
+   * AI 제공자 변경
+   * @param {string} provider - 'openai' 또는 'gemini'
+   */
+  setProvider(provider) {
+    const availableProviders = [];
+    if (this.openai) availableProviders.push('openai');
+    if (this.geminiModel) availableProviders.push('gemini');
+    
+    if (!availableProviders.includes(provider)) {
+      throw new Error(`제공자 '${provider}'를 사용할 수 없습니다. 사용 가능한 제공자: ${availableProviders.join(', ')}`);
+    }
+    
+    this.provider = provider;
+    console.log(`✅ AI 제공자가 ${provider.toUpperCase()}로 변경되었습니다.`);
+  }
+
+  /**
+   * 사용 가능한 AI 제공자 목록
+   * @returns {Array} 사용 가능한 제공자들
+   */
+  getAvailableProviders() {
+    const providers = [];
+    if (this.openai) providers.push('openai');
+    if (this.geminiModel) providers.push('gemini');
+    return providers;
+  }
+
+  /**
+   * AI 제공자 테스트
+   * @param {string} provider - 테스트할 제공자
+   * @returns {Promise<boolean>} 테스트 결과
+   */
+  async testProvider(provider = this.provider) {
+    try {
+      const testPrompt = "Hello, this is a test message. Please respond with 'Test successful'.";
+      const response = await this.generateText(testPrompt, { provider });
+      return response.toLowerCase().includes('test successful') || response.length > 0;
+    } catch (error) {
+      console.error(`${provider} 테스트 실패:`, error);
+      return false;
+    }
+  }
+
+  // ...existing code...
 }
 
 // 싱글톤 패턴을 위한 정적 변수들

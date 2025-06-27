@@ -165,7 +165,12 @@
         }
 
         .btn-secondary {
-            background: linear-gradient(135deg, #718096 0%, #4a5568 100%);
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
         }
 
         .btn-success {
@@ -439,6 +444,99 @@
         .notification.info {
             background: linear-gradient(135deg, #4299e1, #3182ce);
         }
+
+        /* AI 설정 관련 스타일 */
+        .status-indicator {
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .status-indicator.enabled {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+
+        .status-indicator.disabled {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #fc8181;
+        }
+
+        .provider-status {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .provider-item {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .provider-badge {
+            display: block;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .provider-badge.available {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+
+        .provider-badge.unavailable {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #fc8181;
+        }
+
+        .provider-badge.active {
+            background: #667eea;
+            color: white;
+            border: 1px solid #5a67d8;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .button-group .btn {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .result-area {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .result-area h4 {
+            margin-bottom: 10px;
+            color: #4a5568;
+        }
     </style>
 </head>
 <body>
@@ -449,6 +547,57 @@
         </div>
 
         <div class="feature-grid">
+            <!-- AI 설정 및 제공자 관리 -->
+            <div class="feature-card">
+                <h3><span class="icon">🤖</span>AI 설정 관리</h3>
+                
+                <div class="form-group">
+                    <label>현재 AI 제공자:</label>
+                    <div id="currentProvider" class="status-indicator">
+                        로딩 중...
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>AI 제공자 선택:</label>
+                    <div class="select-group">
+                        <select id="aiProvider" class="form-control">
+                            <option value="openai">OpenAI GPT</option>
+                            <option value="gemini">Google Gemini</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>사용 가능한 제공자:</label>
+                    <div id="availableProviders" class="provider-status">
+                        <div class="provider-item">
+                            <span id="openaiStatus" class="provider-badge">OpenAI</span>
+                        </div>
+                        <div class="provider-item">
+                            <span id="geminiStatus" class="provider-badge">Gemini</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button onclick="changeAIProvider()" class="btn">
+                        🔄 제공자 변경
+                    </button>
+                    <button onclick="testAIProvider()" class="btn btn-secondary">
+                        🧪 연결 테스트
+                    </button>
+                    <button onclick="refreshAIStatus()" class="btn btn-secondary">
+                        📊 상태 새로고침
+                    </button>
+                </div>
+
+                <div id="aiStatusResult" class="result-area" style="display: none;">
+                    <h4>AI 상태 정보</h4>
+                    <div id="aiStatusContent"></div>
+                </div>
+            </div>
+
             <!-- 코드 리뷰 기능 -->
             <div class="feature-card">
                 <h3><span class="icon">🔍</span>AI 코드 리뷰</h3>
@@ -1772,476 +1921,146 @@
             }
         }
 
-        // 유틸리티 함수들
-        function showLoading(show) {
-            document.getElementById('loading').classList.toggle('show', show);
-        }
-
-        function showResults() {
-            document.getElementById('results').classList.add('show');
-            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        function showNotification(message, type) {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.className = `notification ${type}`;
-            notification.classList.add('show');
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 5000);
-        }
-
-        function setScoreBadge(score) {
-            const badge = document.getElementById('resultScore');
-            badge.textContent = `${score}/100`;
-            
-            badge.className = 'score-badge ';
-            if (score >= 90) badge.className += 'score-excellent';
-            else if (score >= 70) badge.className += 'score-good';
-            else if (score >= 50) badge.className += 'score-fair';
-            else badge.className += 'score-poor';
-        }
-
-        function showTab(tabName) {
-            // 모든 탭 내용 숨기기
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            
-            // 모든 탭 버튼 비활성화
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // 선택된 탭 활성화
-            document.getElementById(`tab-${tabName}`).classList.add('active');
-            event.target.classList.add('active');
-        }
-
-        function generateIssuesHtml(issues) {
-            if (!issues.length) return '<p>발견된 이슈가 없습니다.</p>';
-            
-            let html = '<h4>발견된 이슈:</h4><div class="issue-list">';
-            
-            issues.forEach(issue => {
-                const severityClass = issue.severity ? issue.severity.toLowerCase() : 'medium';
-                html += `
-                    <div class="issue-item ${severityClass}">
-                        <strong>${issue.type || 'GENERAL'}</strong>
-                        <p>${issue.description}</p>
-                        ${issue.line ? `<small>라인: ${issue.line}</small>` : ''}
-                    </div>
-                `;
-            });
-            
-            html += '</div>';
-            return html;
-        }
-
-        function generateSuggestionsHtml(suggestions) {
-            if (!suggestions.length) return '';
-            
-            let html = '<h4>개선 제안:</h4><div class="issue-list">';
-            
-            suggestions.forEach(suggestion => {
-                const priorityClass = suggestion.priority ? suggestion.priority.toLowerCase() : 'medium';
-                html += `
-                    <div class="issue-item ${priorityClass}">
-                        <strong>${suggestion.category || 'GENERAL'} (${suggestion.priority || 'MEDIUM'})</strong>
-                        <p>${suggestion.description}</p>
-                        ${suggestion.implementation ? `<small>구현: ${suggestion.implementation}</small>` : ''}
-                    </div>
-                `;
-            });
-            
-            html += '</div>';
-            return html;
-        }
-
-        function generateAutoFixesHtml(fixes) {
-            if (!fixes.length) return '';
-            
-            let html = '<h4>자동 수정 가능:</h4><div class="issue-list">';
-            
-            fixes.forEach(fix => {
-                html += `
-                    <div class="issue-item low">
-                        <strong>${fix.type}</strong>
-                        <p>${fix.description}</p>
-                        ${fix.from && fix.to ? `<small>${fix.from} → ${fix.to}</small>` : ''}
-                    </div>
-                `;
-            });
-            
-            html += '</div>';
-            return html;
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                showNotification('클립보드에 복사되었습니다.', 'success');
-            }).catch(() => {
-                showNotification('복사에 실패했습니다.', 'error');
-            });
-        }
-
-        // 추가 결과 표시 함수들은 간소화하여 표시
-        function displayAnalysisResult(data) {
-            document.getElementById('resultTitle').textContent = '프로젝트 분석 결과';
-            document.getElementById('overviewContent').innerHTML = '<p>분석이 완료되었습니다.</p>';
-            showResults();
-        }
-
-        function displayHistoryResult(data) {
-            document.getElementById('resultTitle').textContent = '코드 리뷰 히스토리';
-            const html = `<p>총 ${data.reviews.length}개의 리뷰 기록이 있습니다.</p>`;
-            document.getElementById('overviewContent').innerHTML = html;
-            showResults();
-        }
-
-        function displayStatsResult(data) {
-            document.getElementById('resultTitle').textContent = '리뷰 통계';
-            const html = `
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-number">${data.total_reviews}</div>
-                        <div class="stat-label">총 리뷰 수</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number">${data.average_score}</div>
-                        <div class="stat-label">평균 점수</div>
-                    </div>
-                </div>
-            `;
-            document.getElementById('overviewContent').innerHTML = html;
-            showResults();
-        }
-
-        function displayFrameworksResult(data) {
-            document.getElementById('resultTitle').textContent = '지원 프레임워크';
-            let html = '<h4>JavaScript:</h4>';
-            Object.entries(data.javascript).forEach(([key, framework]) => {
-                html += `<p><strong>${framework.name}</strong>: ${framework.description}</p>`;
-            });
-            html += '<h4>Python:</h4>';
-            Object.entries(data.python).forEach(([key, framework]) => {
-                html += `<p><strong>${framework.name}</strong>: ${framework.description}</p>`;
-            });
-            document.getElementById('overviewContent').innerHTML = html;
-            showResults();
-        }
-
-        function displayTemplatesResult(data) {
-            document.getElementById('resultTitle').textContent = '테스트 템플릿';
-            let html = '';
-            Object.entries(data).forEach(([key, template]) => {
-                html += `
-                    <div class="issue-item low">
-                        <strong>${template.name}</strong>
-                        <p>${template.description}</p>
-                        <small>사용 사례: ${template.use_cases.join(', ')}</small>
-                    </div>
-                `;
-            });
-            document.getElementById('overviewContent').innerHTML = html;
-            showResults();
-        }
-
-        function generateCategoriesHtml(categories) {
-            if (!categories) return '';
-            
-            let html = '<h4>카테고리별 점수:</h4>';
-            Object.entries(categories).forEach(([category, data]) => {
-                if (data.score !== undefined) {
-                    html += `
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${data.score}%">
-                                ${category}: ${data.score}%
-                            </div>
-                        </div>
-                    `;
-                }
-            });
-            
-            return html;
-        }
-
-        function generateRecommendationsHtml(recommendations) {
-            if (!recommendations) return '';
-            
-            let html = '<h4>권장사항:</h4><div class="issue-list">';
-            
-            Object.entries(recommendations).forEach(([key, items]) => {
-                if (Array.isArray(items) && items.length > 0) {
-                    html += `<h5>${key.replace('_', ' ').toUpperCase()}:</h5>`;
-                    items.forEach(item => {
-                        html += `
-                            <div class="issue-item low">
-                                <p>${item}</p>
-                            </div>
-                        `;
-                    });
-                }
-            });
-            
-            html += '</div>';
-            return html;
-        }
-
-        // 배포 관리 함수들
-        function updateDeploymentForm() {
-            const action = document.getElementById('deploymentAction').value;
-            
-            // 모든 폼 숨기기
-            document.getElementById('createPipelineForm').style.display = 'none';
-            document.getElementById('deployForm').style.display = 'none';
-            document.getElementById('statusForm').style.display = 'none';
-            document.getElementById('rollbackForm').style.display = 'none';
-            document.getElementById('logsForm').style.display = 'none';
-            document.getElementById('metricsForm').style.display = 'none';
-            
-            // 선택된 액션에 따라 폼 표시
-            switch(action) {
-                case 'create':
-                    document.getElementById('createPipelineForm').style.display = 'block';
-                    break;
-                case 'deploy':
-                    document.getElementById('deployForm').style.display = 'block';
-                    break;
-                case 'status':
-                    document.getElementById('statusForm').style.display = 'block';
-                    break;
-                case 'rollback':
-                    document.getElementById('rollbackForm').style.display = 'block';
-                    break;
-                case 'logs':
-                    document.getElementById('logsForm').style.display = 'block';
-                    break;
-                case 'metrics':
-                    document.getElementById('metricsForm').style.display = 'block';
-                    break;
-            }
-        }
-
-        // 배포 작업 실행
-        async function executeDeploymentAction() {
-            const action = document.getElementById('deploymentAction').value;
-            if (!action) {
-                showNotification('배포 작업을 선택해주세요.', 'error');
-                return;
-            }
-
-            showLoading();
-
+        // AI 설정 관리 함수들
+        async function refreshAIStatus() {
             try {
-                let endpoint = '/api/deployment/';
-                let data = {};
-
-                switch(action) {
-                    case 'create':
-                        endpoint += 'pipeline';
-                        data = {
-                            name: document.getElementById('pipelineName').value,
-                            repository: document.getElementById('gitRepository').value,
-                            branch: document.getElementById('gitBranch').value,
-                            buildEnvironment: document.getElementById('buildEnvironment').value,
-                            deploymentTarget: document.getElementById('deploymentTarget').value
-                        };
-                        break;
-                    
-                    case 'deploy':
-                        endpoint += 'deploy';
-                        data = {
-                            pipelineId: document.getElementById('deployPipelineId').value,
-                            environment: document.getElementById('deployEnvironment').value,
-                            deploymentType: document.getElementById('deploymentType').value
-                        };
-                        break;
-                    
-                    case 'status':
-                        endpoint += `status/${document.getElementById('deploymentId').value}`;
-                        break;
-                    
-                    case 'rollback':
-                        endpoint += 'rollback';
-                        data = {
-                            deploymentId: document.getElementById('rollbackDeploymentId').value,
-                            version: document.getElementById('rollbackVersion').value
-                        };
-                        break;
-                    
-                    case 'logs':
-                        const deploymentId = document.getElementById('logsDeploymentId').value;
-                        const limit = document.getElementById('logLimit').value;
-                        endpoint += `logs/${deploymentId}?limit=${limit}`;
-                        break;
-                    
-                    case 'metrics':
-                        const metricsDeploymentId = document.getElementById('metricsDeploymentId').value;
-                        const timeRange = document.getElementById('metricsTimeRange').value;
-                        endpoint += `metrics/${metricsDeploymentId}?timeRange=${timeRange}`;
-                        break;
-                }
-
-                const response = await fetch(endpoint, {
-                    method: action === 'status' || action === 'logs' || action === 'metrics' ? 'GET' : 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: action === 'status' || action === 'logs' || action === 'metrics' ? undefined : JSON.stringify(data)
-                });
-
+                showLoading();
+                
+                const response = await fetch('/api/v1/ai/status');
                 const result = await response.json();
-
-                if (response.ok) {
-                    displayDeploymentResult(result, action);
-                    showNotification(`${getActionKoreanName(action)} 작업이 완료되었습니다.`, 'success');
+                
+                if (result.success) {
+                    updateAIStatusDisplay(result.data);
+                    showNotification('AI 상태가 새로고침되었습니다.', 'success');
                 } else {
-                    throw new Error(result.error || `${getActionKoreanName(action)} 실패`);
+                    throw new Error(result.message || 'AI 상태 조회에 실패했습니다.');
                 }
-
             } catch (error) {
-                console.error('배포 작업 오류:', error);
-                showNotification(error.message || '배포 작업 중 오류가 발생했습니다.', 'error');
+                console.error('AI 상태 새로고침 오류:', error);
+                showNotification('AI 상태 새로고침에 실패했습니다: ' + error.message, 'error');
             } finally {
                 hideLoading();
             }
         }
 
-        function getActionKoreanName(action) {
-            const names = {
-                'create': '파이프라인 생성',
-                'deploy': '배포',
-                'status': '상태 확인',
-                'rollback': '롤백',
-                'logs': '로그 조회',
-                'metrics': '메트릭 조회'
-            };
-            return names[action] || action;
-        }
-
-        function displayDeploymentResult(result, action) {
-            let html = `<h3>🚀 ${getActionKoreanName(action)} 결과</h3>`;
-
-            switch(action) {
-                case 'create':
-                    html += `
-                        <div class="stats-grid">
-                            <div class="stat-card">
-                                <div class="stat-number">${result.pipelineId || 'N/A'}</div>
-                                <div class="stat-label">파이프라인 ID</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-number">${result.status || 'N/A'}</div>
-                                <div class="stat-label">상태</div>
-                            </div>
-                        </div>
-                        <div class="issue-item low">
-                            <h4>설정 정보:</h4>
-                            <p><strong>저장소:</strong> ${result.repository || 'N/A'}</p>
-                            <p><strong>브랜치:</strong> ${result.branch || 'N/A'}</p>
-                            <p><strong>빌드 환경:</strong> ${result.buildEnvironment || 'N/A'}</p>
-                            <p><strong>배포 타겟:</strong> ${result.deploymentTarget || 'N/A'}</p>
-                        </div>
-                    `;
-                    break;
-
-                case 'deploy':
-                    html += `
-                        <div class="stats-grid">
-                            <div class="stat-card">
-                                <div class="stat-number">${result.deploymentId || 'N/A'}</div>
-                                <div class="stat-label">배포 ID</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-number">${result.status || 'N/A'}</div>
-                                <div class="stat-label">상태</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-number">${result.progress || '0'}%</div>
-                                <div class="stat-label">진행률</div>
-                            </div>
-                        </div>
-                        ${result.estimatedTime ? `
-                        <div class="issue-item low">
-                            <p><strong>예상 완료 시간:</strong> ${result.estimatedTime}</p>
-                        </div>
-                        ` : ''}
-                    `;
-                    break;
-
-                case 'status':
-                    html += `
-                        <div class="stats-grid">
-                            <div class="stat-card">
-                                <div class="stat-number">${result.status || 'N/A'}</div>
-                                <div class="stat-label">배포 상태</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-number">${result.progress || '0'}%</div>
-                                <div class="stat-label">진행률</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-number">${result.health || 'N/A'}</div>
-                                <div class="stat-label">서비스 상태</div>
-                            </div>
-                        </div>
-                        ${result.url ? `
-                        <div class="issue-item low">
-                            <p><strong>배포 URL:</strong> <a href="${result.url}" target="_blank">${result.url}</a></p>
-                        </div>
-                        ` : ''}
-                    `;
-                    break;
-
-                case 'logs':
-                    html += `
-                        <div class="issue-item low">
-                            <h4>배포 로그:</h4>
-                            <pre style="background: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto; white-space: pre-wrap;">${result.logs || '로그 없음'}</pre>
-                        </div>
-                    `;
-                    break;
-
-                case 'metrics':
-                    html += `
-                        <div class="stats-grid">
-                            <div class="stat-card">
-                                <div class="stat-number">${result.successRate || '0'}%</div>
-                                <div class="stat-label">성공률</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-number">${result.averageTime || '0'}s</div>
-                                <div class="stat-label">평균 배포 시간</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-number">${result.totalDeployments || '0'}</div>
-                                <div class="stat-label">총 배포 수</div>
-                            </div>
-                        </div>
-                    `;
-                    break;
-
-                default:
-                    html += `<div class="issue-item low"><pre>${JSON.stringify(result, null, 2)}</pre></div>`;
+        async function changeAIProvider() {
+            const selectedProvider = document.getElementById('aiProvider').value;
+            
+            try {
+                showLoading();
+                
+                const response = await fetch('/api/v1/ai/set-provider', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ provider: selectedProvider })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    updateAIStatusDisplay(result.data.status);
+                    showNotification(result.data.message, 'success');
+                } else {
+                    throw new Error(result.message || 'AI 제공자 변경에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('AI 제공자 변경 오류:', error);
+                showNotification('AI 제공자 변경에 실패했습니다: ' + error.message, 'error');
+            } finally {
+                hideLoading();
             }
-
-            document.getElementById('overviewContent').innerHTML = html;
-            document.getElementById('results').style.display = 'block';
-            document.getElementById('resultTitle').textContent = `${getActionKoreanName(action)} 결과`;
         }
 
-        // 기존 이벤트 리스너에 배포 관리 추가
+        async function testAIProvider() {
+            const selectedProvider = document.getElementById('aiProvider').value;
+            
+            try {
+                showLoading();
+                
+                const response = await fetch('/api/v1/ai/test-provider', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ provider: selectedProvider })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    const message = result.data.testPassed ? 
+                        `✅ ${result.data.provider} 연결 테스트 성공!` : 
+                        `❌ ${result.data.provider} 연결 테스트 실패`;
+                    
+                    showNotification(message, result.data.testPassed ? 'success' : 'error');
+                    
+                    // 테스트 결과 표시
+                    document.getElementById('aiStatusResult').style.display = 'block';
+                    document.getElementById('aiStatusContent').innerHTML = `
+                        <div class="test-result ${result.data.testPassed ? 'success' : 'failed'}">
+                            <h5>연결 테스트 결과</h5>
+                            <p><strong>제공자:</strong> ${result.data.provider}</p>
+                            <p><strong>상태:</strong> ${result.data.testPassed ? '정상' : '실패'}</p>
+                            <p><strong>테스트 시간:</strong> ${new Date(result.data.timestamp).toLocaleString()}</p>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(result.message || 'AI 제공자 테스트에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('AI 제공자 테스트 오류:', error);
+                showNotification('AI 제공자 테스트에 실패했습니다: ' + error.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function updateAIStatusDisplay(status) {
+            // 현재 제공자 표시
+            const currentProviderEl = document.getElementById('currentProvider');
+            currentProviderEl.textContent = status.provider.toUpperCase();
+            currentProviderEl.className = `status-indicator ${status.isEnabled ? 'enabled' : 'disabled'}`;
+            
+            // 제공자 선택 업데이트
+            document.getElementById('aiProvider').value = status.provider;
+            
+            // 사용 가능한 제공자 상태 업데이트
+            const openaiStatus = document.getElementById('openaiStatus');
+            const geminiStatus = document.getElementById('geminiStatus');
+            
+            openaiStatus.className = `provider-badge ${
+                status.availableProviders.openai ? 'available' : 'unavailable'
+            } ${status.provider === 'openai' ? 'active' : ''}`;
+            
+            geminiStatus.className = `provider-badge ${
+                status.availableProviders.gemini ? 'available' : 'unavailable'
+            } ${status.provider === 'gemini' ? 'active' : ''}`;
+            
+            // 상세 정보 표시
+            document.getElementById('aiStatusResult').style.display = 'block';
+            document.getElementById('aiStatusContent').innerHTML = `
+                <div class="ai-status-details">
+                    <h5>AI 서비스 상태</h5>
+                    <p><strong>활성화:</strong> ${status.isEnabled ? '✅ 예' : '❌ 아니오'}</p>
+                    <p><strong>현재 제공자:</strong> ${status.provider.toUpperCase()}</p>
+                    <p><strong>모델:</strong> ${status.models[status.provider] || '알 수 없음'}</p>
+                    <p><strong>온도:</strong> ${status.temperature}</p>
+                    <p><strong>최대 토큰:</strong> ${status.maxTokens}</p>
+                    
+                    <h6>제공자 상태</h6>
+                    <ul>
+                        <li>OpenAI: ${status.availableProviders.openai ? '✅ 사용 가능' : '❌ 사용 불가'}</li>
+                        <li>Google Gemini: ${status.availableProviders.gemini ? '✅ 사용 가능' : '❌ 사용 불가'}</li>
+                    </ul>
+                </div>
+            `;
+        }
+
+        // 페이지 로드 시 AI 상태 확인
         document.addEventListener('DOMContentLoaded', function() {
+            // 기존 이벤트 리스너들...
             setupEventListeners();
+            
+            // AI 상태 자동 로드
+            refreshAIStatus();
             
             // 배포 관리 이벤트 리스너
             const executeDeploymentBtn = document.getElementById('executeDeploymentAction');

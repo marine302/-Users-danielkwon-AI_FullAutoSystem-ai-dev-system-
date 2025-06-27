@@ -24,7 +24,10 @@ export default {
   
   ai: {
     openaiApiKey: process.env.OPENAI_API_KEY,
+    geminiApiKey: process.env.GEMINI_API_KEY,
+    defaultProvider: process.env.AI_PROVIDER || 'openai', // 'openai' or 'gemini'
     defaultModel: 'gpt-4',
+    geminiModel: 'gemini-pro',
     maxTokens: 4000,
     temperature: 0.7
   },

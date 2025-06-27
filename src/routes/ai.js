@@ -183,22 +183,88 @@ router.post('/generate-documentation', async (req, res) => {
 /**
  * AI 서비스 상태 확인 API
  */
-router.get('/status', (req, res) => {
-  res.json({
-    success: true,
-    data: {
-      service: 'AI Service',
-      status: 'running',
-      features: [
-        'Text Generation',
-        'Code Generation',
-        'Code Review',
-        'Project Structure Generation',
-        'Documentation Generation'
-      ],
-      timestamp: new Date().toISOString()
+router.get('/status', async (req, res) => {
+  try {
+    const status = aiService.getStatus();
+    
+    res.json({
+      success: true,
+      data: {
+        ...status,
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('AI 상태 확인 오류:', error);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'AI 상태 확인 중 오류가 발생했습니다',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * AI 제공자 변경 API
+ */
+router.post('/set-provider', async (req, res) => {
+  try {
+    const { provider } = req.body;
+    
+    if (!provider) {
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'provider는 필수 매개변수입니다'
+      });
     }
-  });
+
+    aiService.setProvider(provider);
+    
+    res.json({
+      success: true,
+      data: {
+        provider,
+        status: aiService.getStatus(),
+        message: `AI 제공자가 ${provider}로 변경되었습니다`,
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('AI 제공자 변경 오류:', error);
+    res.status(400).json({
+      error: 'Bad Request',
+      message: error.message,
+      availableProviders: aiService.getAvailableProviders()
+    });
+  }
+});
+
+/**
+ * AI 제공자 테스트 API
+ */
+router.post('/test-provider', async (req, res) => {
+  try {
+    const { provider } = req.body;
+    
+    const testResult = await aiService.testProvider(provider);
+    
+    res.json({
+      success: true,
+      data: {
+        provider: provider || aiService.provider,
+        testPassed: testResult,
+        message: testResult ? 'AI 제공자가 정상적으로 작동합니다' : 'AI 제공자 테스트에 실패했습니다',
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('AI 제공자 테스트 오류:', error);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'AI 제공자 테스트 중 오류가 발생했습니다',
+      details: error.message
+    });
+  }
 });
 
 export default router;

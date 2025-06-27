@@ -63,8 +63,12 @@ cp .env.example .env
 ### 2. 환경변수 설정
 `.env` 파일에서 다음 설정을 수정하세요:
 ```env
-# OpenAI API 키 (필수)
+# AI API 키 설정 (둘 중 하나 또는 모두 설정)
 OPENAI_API_KEY=your-openai-api-key-here
+GEMINI_API_KEY=your-gemini-api-key-here
+
+# AI 제공자 선택 ('openai' 또는 'gemini')
+AI_PROVIDER=openai
 
 # 서버 설정
 PORT=3001
@@ -72,6 +76,8 @@ NODE_ENV=development
 
 # 기타 설정들...
 ```
+
+**🆕 Google Gemini API 지원**: [Gemini API 설정 가이드](docs/GEMINI_API_GUIDE.md)를 참고하여 무료로 AI 기능을 사용할 수 있습니다!
 
 ### 3. 서버 실행
 ```bash
