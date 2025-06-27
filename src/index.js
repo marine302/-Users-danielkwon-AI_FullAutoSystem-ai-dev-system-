@@ -26,6 +26,11 @@ app.use(express.static(join(__dirname, '../public'))); // 루트에서도 정적
 
 // API 라우트
 app.get('/', (req, res) => {
+  res.sendFile(join(__dirname, '../public/index.html'));
+});
+
+// API 정보 엔드포인트 (JSON)
+app.get('/api', (req, res) => {
   res.json({
     message: 'AI Development System API',
     version: '1.0.0',
@@ -42,6 +47,23 @@ app.get('/health', (req, res) => {
     memory: process.memoryUsage(),
     timestamp: new Date().toISOString()
   });
+});
+
+// HTML 페이지 라우트들
+app.get('/app', (req, res) => {
+  res.sendFile(join(__dirname, '../public/app.html'));
+});
+
+app.get('/pair-programming', (req, res) => {
+  res.sendFile(join(__dirname, '../public/pair-programming.html'));
+});
+
+app.get('/monitoring', (req, res) => {
+  res.sendFile(join(__dirname, '../public/monitoring-dashboard.html'));
+});
+
+app.get('/advanced', (req, res) => {
+  res.sendFile(join(__dirname, '../public/advanced-features.html'));
 });
 
 // 라우터 임포트
