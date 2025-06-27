@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "main": "src/index.js",
   "type": "module",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
   "directories": {
     "doc": "docs"
   },
@@ -66,7 +70,6 @@
     "mongoose": "^7.5.0",
     "multer": "^2.0.1",
     "openai": "^4.0.0",
-    "sqlite3": "^5.1.7",
     "uuid": "^11.1.0",
     "ws": "^8.18.2"
   },
