@@ -270,6 +270,59 @@ class DatabaseService {
   close() {
     console.log('JSON 데이터베이스 서비스 종료');
   }
+
+  /**
+   * 시스템 메트릭 저장
+   */
+  async saveSystemMetrics(metricsData) {
+    try {
+      const timestamp = Date.now();
+      const filepath = path.join(this.dataPath, 'monitoring', `metrics-${timestamp}.json`);
+      
+      const metrics = {
+        id: timestamp,
+        ...metricsData,
+        created_at: new Date().toISOString()
+      };
+
+      await this.writeJSON(filepath, metrics);
+      return metrics;
+    } catch (error) {
+      console.error('시스템 메트릭 저장 오류:', error);
+      return null;
+    }
+  }
+
+  /**
+   * 시스템 메트릭 조회
+   */
+  async getSystemMetrics(limit = 100) {
+    try {
+      const monitoringDir = path.join(this.dataPath, 'monitoring');
+      const files = await fs.readdir(monitoringDir);
+      
+      // 메트릭 파일만 필터링하고 정렬 (최신순)
+      const sortedFiles = files
+        .filter(file => file.startsWith('metrics-') && file.endsWith('.json'))
+        .sort((a, b) => {
+          const timeA = parseInt(a.replace('metrics-', '').replace('.json', ''));
+          const timeB = parseInt(b.replace('metrics-', '').replace('.json', ''));
+          return timeB - timeA;
+        })
+        .slice(0, limit);
+
+      const metrics = [];
+      for (const file of sortedFiles) {
+        const data = await this.readJSON(path.join(monitoringDir, file));
+        if (data) metrics.push(data);
+      }
+
+      return metrics;
+    } catch (error) {
+      console.error('시스템 메트릭 조회 오류:', error);
+      return [];
+    }
+  }
 }
 
 // 기본 export와 named export 모두 제공
