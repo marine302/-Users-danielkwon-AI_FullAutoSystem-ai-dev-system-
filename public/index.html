@@ -148,28 +148,28 @@
         
         <div class="cards">
             <div class="card">
-                <h3>🚀 AI 개발 도구</h3>
+                <h3>🚀 통합 개발 도구</h3>
                 <p>
-                    코드 생성, 프로젝트 생성, 분석, 자동화 등 
-                    AI 기반 통합 개발 도구를 제공합니다.
+                    AI 코드 생성, 프로젝트 생성, 코드 리뷰, 분석 등 
+                    모든 개발 도구가 통합된 메인 워크스페이스입니다.
                 </p>
                 <a href="/app" class="btn">개발 도구 시작</a>
             </div>
             
             <div class="card">
-                <h3>🤝 페어 프로그래밍</h3>
+                <h3>🤝 실시간 페어 프로그래밍</h3>
                 <p>
-                    실시간 협업 개발, AI와 함께하는 코딩, 
-                    팀원들과의 동시 편집 기능을 제공합니다.
+                    팀원들과 실시간 협업 개발, AI와 함께하는 코딩, 
+                    동시 편집 및 채팅 기능을 제공합니다.
                 </p>
                 <a href="/pair-programming" class="btn">협업 개발 시작</a>
             </div>
             
             <div class="card">
-                <h3>⚙️ 고급 설정</h3>
+                <h3>⚙️ 고급 설정 & 분석</h3>
                 <p>
-                    AI 제공자 관리, 고급 코드 분석, 
-                    테스트 자동화 등 전문 기능을 제공합니다.
+                    AI 제공자 관리, 심화 코드 분석, 보안 검사, 
+                    자동 테스트 생성 등 전문가용 기능입니다.
                 </p>
                 <a href="/advanced-features" class="btn">고급 기능</a>
             </div>
@@ -177,35 +177,49 @@
             <div class="card">
                 <h3>📊 시스템 모니터링</h3>
                 <p>
-                    실시간 시스템 성능, 자원 사용량, 알림 등 
-                    시스템 상태를 모니터링합니다.
+                    실시간 시스템 성능, 메모리/CPU 사용량, 
+                    로그 분석 및 알림 관리 대시보드입니다.
                 </p>
                 <a href="/monitoring-dashboard" class="btn">모니터링 대시보드</a>
             </div>
         </div>
         
         <div class="api-info">
-            <h2>📡 API 엔드포인트</h2>
+            <h2>📡 API 엔드포인트 (테스트 완료)</h2>
             
             <div class="endpoint">
-                <strong>AI 서비스</strong><br>
-                <code>GET /api/v1/ai/status</code> - AI 서비스 상태<br>
+                <strong>✅ AI 서비스</strong><br>
                 <code>POST /api/v1/ai/generate-text</code> - 텍스트 생성<br>
-                <code>POST /api/v1/ai/generate-code</code> - 코드 생성
+                <code>POST /api/v1/ai/generate-code</code> - 코드 생성 (테스트됨)<br>
+                <code>GET /api/v1/ai/status</code> - AI 서비스 상태
             </div>
             
             <div class="endpoint">
-                <strong>프로젝트 관리</strong><br>
+                <strong>✅ 프로젝트 관리</strong><br>
                 <code>GET /api/v1/projects</code> - 프로젝트 목록<br>
-                <code>POST /api/v1/projects</code> - 새 프로젝트 생성<br>
+                <code>POST /api/v1/projects</code> - 새 프로젝트 생성 (테스트됨)<br>
                 <code>POST /api/v1/projects/:id/features</code> - 기능 추가
             </div>
             
             <div class="endpoint">
-                <strong>자동화</strong><br>
-                <code>GET /api/v1/automation/status</code> - 자동화 서비스 상태<br>
-                <code>POST /api/v1/automation/execute</code> - 명령어 실행<br>
-                <code>GET /api/v1/automation/history</code> - 명령어 히스토리
+                <strong>✅ 코드 리뷰</strong><br>
+                <code>POST /api/v1/code-review/text</code> - 텍스트 코드 리뷰 (테스트됨)<br>
+                <code>POST /api/v1/code-review/file</code> - 파일 코드 리뷰<br>
+                <code>POST /api/v1/code-review/project</code> - 프로젝트 코드 리뷰
+            </div>
+            
+            <div class="endpoint">
+                <strong>✅ 페어 프로그래밍</strong><br>
+                <code>POST /api/v1/pair-programming/start-session</code> - 세션 시작 (테스트됨)<br>
+                <code>GET /api/v1/pair-programming/sessions</code> - 활성 세션 목록<br>
+                <code>POST /api/v1/pair-programming/join</code> - 세션 참가
+            </div>
+            
+            <div class="endpoint">
+                <strong>✅ 시스템 모니터링</strong><br>
+                <code>GET /api/v1/monitoring/system</code> - 시스템 정보 (테스트됨)<br>
+                <code>GET /api/v1/monitoring/logs</code> - 시스템 로그<br>
+                <code>GET /health</code> - 헬스체크 (테스트됨)
             </div>
         </div>
         

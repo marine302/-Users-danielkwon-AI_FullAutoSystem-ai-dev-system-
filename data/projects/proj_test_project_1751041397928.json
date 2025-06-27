@@ -1,0 +1,42 @@
+{
+  "id": "proj_test_project_1751041397928",
+  "name": "test-project",
+  "description": "테스트 프로젝트입니다",
+  "type": "web",
+  "language": "javascript",
+  "framework": null,
+  "status": "active",
+  "metadata": {
+    "path": "/Users/danielkwon/AI_FullAutoSystem/ai-dev-system/temp/test-project/test-project",
+    "structure": {
+      "structure": {
+        "folders": [
+          "src",
+          "tests",
+          "docs",
+          "config"
+        ],
+        "files": [
+          "README.md",
+          "package.json",
+          ".gitignore",
+          "index.js"
+        ]
+      },
+      "dependencies": [
+        "express",
+        "dotenv"
+      ],
+      "scripts": {
+        "start": "node index.js",
+        "dev": "nodemon index.js",
+        "test": "jest"
+      },
+      "description": "[DEMO] web 프로젝트: 테스트 프로젝트입니다"
+    },
+    "features": [],
+    "createdAt": "2025-06-27T16:23:17.929Z"
+  },
+  "created_at": "2025-06-27T16:23:17.929Z",
+  "updated_at": "2025-06-27T16:23:17.929Z"
+}
