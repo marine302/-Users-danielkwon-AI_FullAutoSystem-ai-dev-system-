@@ -35,18 +35,55 @@
                         </div>
                     </div>
                     <div class="flex items-center space-x-4">
-                        <a href="/" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all duration-300 flex items-center space-x-2">
-                            <i class="fas fa-home"></i>
-                            <span>메인으로</span>
-                        </a>
                         <span class="glass px-4 py-2 rounded-lg">
                             <i class="fas fa-circle text-green-400 mr-2"></i>
                             <span x-text="systemStatus"></span>
                         </span>
+                        <button onclick="toggleHelp()" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all duration-300 flex items-center space-x-2">
+                            <i class="fas fa-question-circle"></i>
+                            <span>도움말</span>
+                        </button>
+                        <a href="/" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all duration-300 flex items-center space-x-2">
+                            <i class="fas fa-home"></i>
+                            <span>메인으로</span>
+                        </a>
                     </div>
                 </div>
             </div>
         </header>
+
+        <!-- 도움말 패널 -->
+        <div id="help-panel" style="display: none;" class="bg-gray-100 border-b border-gray-300">
+            <div class="container mx-auto px-6 py-4">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3">📱 프로젝트 관리 사용법</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                    <div>
+                        <h4 class="font-semibold text-blue-600 mb-2">🏗️ 프로젝트 생성</h4>
+                        <ul class="space-y-1">
+                            <li>• 프로젝트 이름과 설명 입력</li>
+                            <li>• 기술 스택 선택 (React, Vue 등)</li>
+                            <li>• AI가 자동으로 구조 생성</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-blue-600 mb-2">🤖 AI 코드 생성</h4>
+                        <ul class="space-y-1">
+                            <li>• 자연어로 기능 설명 입력</li>
+                            <li>• 프로그래밍 언어 선택</li>
+                            <li>• AI가 완성된 코드 제공</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-blue-600 mb-2">🔍 코드 리뷰</h4>
+                        <ul class="space-y-1">
+                            <li>• 코드 붙여넣기 또는 파일 업로드</li>
+                            <li>• AI가 품질, 보안, 성능 분석</li>
+                            <li>• 개선 제안사항 확인</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- 메인 네비게이션 -->
         <nav class="bg-gray-800 border-b border-gray-700">

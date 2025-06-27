@@ -45,6 +45,71 @@
             opacity: 0.9;
         }
 
+        /* 상단 네비게이션 바 스타일 */
+        .nav-bar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .nav-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-button, .nav-link {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+        }
+
+        .nav-button:hover, .nav-link:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-1px);
+        }
+
+        #connection-status {
+            background: rgba(255,255,255,0.2);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #nav-status-dot {
+            width: 8px;
+            height: 8px;
+            background: #4CAF50;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        /* 도움말 패널 스타일 */
+        #help-panel {
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         .status-bar {
             background: rgba(255, 255, 255, 0.95);
             padding: 15px;
@@ -364,16 +429,78 @@
     </style>
 </head>
 <body>
+    <!-- 상단 네비게이션 바 -->
+    <div class="nav-bar">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <h1 style="margin: 0; font-size: 1.5em; font-weight: bold;">📊 시스템 모니터링 대시보드</h1>
+        </div>
+        <div class="nav-controls">
+            <div id="connection-status">
+                <div id="nav-status-dot"></div>
+                <span id="nav-status-text">연결됨</span>
+            </div>
+            <button onclick="toggleHelp()" class="nav-button">
+                <i class="fas fa-question-circle"></i>
+                <span>도움말</span>
+            </button>
+            <a href="/" class="nav-link">
+                <i class="fas fa-home"></i>
+                <span>메인으로</span>
+            </a>
+        </div>
+    </div>
+    
+    <!-- 도움말 패널 -->
+    <div id="help-panel" style="display: none; background: #f8f9fa; border-bottom: 1px solid #dee2e6; padding: 15px 20px;">
+        <div style="max-width: 1200px; margin: 0 auto;">
+            <h3 style="margin: 0 0 15px 0; color: #495057;">📊 모니터링 대시보드 사용법</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                <div>
+                    <h4 style="color: #667eea; margin-bottom: 8px;">📈 실시간 메트릭</h4>
+                    <ul style="margin: 0; padding-left: 20px; color: #6c757d;">
+                        <li><strong>CPU 사용률</strong>: 실시간 프로세서 부하 상태</li>
+                        <li><strong>메모리 사용량</strong>: RAM 및 스왑 메모리 현황</li>
+                        <li><strong>디스크 사용량</strong>: 저장공간 사용률 및 I/O</li>
+                        <li><strong>네트워크 트래픽</strong>: 입출력 대역폭 모니터링</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="color: #667eea; margin-bottom: 8px;">🔍 로그 분석</h4>
+                    <ul style="margin: 0; padding-left: 20px; color: #6c757d;">
+                        <li><strong>실시간 로그</strong>: 시스템 및 애플리케이션 로그</li>
+                        <li><strong>에러 탐지</strong>: 자동 오류 및 경고 감지</li>
+                        <li><strong>필터링</strong>: 로그 레벨 및 시간별 필터</li>
+                        <li><strong>검색</strong>: 키워드 기반 로그 검색</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="color: #667eea; margin-bottom: 8px;">⚠️ 알림 설정</h4>
+                    <ul style="margin: 0; padding-left: 20px; color: #6c757d;">
+                        <li><strong>임계값 설정</strong>: CPU, 메모리 사용률 한계</li>
+                        <li><strong>이메일 알림</strong>: 위험 상황 시 자동 알림</li>
+                        <li><strong>Slack 연동</strong>: 팀 채널로 실시간 알림</li>
+                        <li><strong>알림 이력</strong>: 과거 알림 내역 조회</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="color: #667eea; margin-bottom: 8px;">📊 대시보드 커스터마이징</h4>
+                    <ul style="margin: 0; padding-left: 20px; color: #6c757d;">
+                        <li><strong>위젯 추가/제거</strong>: 필요한 메트릭만 표시</li>
+                        <li><strong>레이아웃 변경</strong>: 드래그앤드롭으로 배치</li>
+                        <li><strong>시간 범위</strong>: 1분~7일 범위 설정</li>
+                        <li><strong>자동 새로고침</strong>: 5초~5분 간격 설정</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <div class="container">
         <div class="header">
             <div>
                 <h1>📊 시스템 모니터링 대시보드</h1>
                 <p>실시간 시스템 성능 및 상태 모니터링</p>
             </div>
-            <a href="/" style="background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 8px; text-decoration: none; color: white; transition: all 0.3s; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(10px);">
-                <i class="fas fa-home"></i>
-                <span>메인으로</span>
-            </a>
         </div>
 
         <!-- 상태 표시줄 -->
@@ -753,6 +880,16 @@
 
         // 초기 시스템 정보 로드
         loadSystemInfo();
+        
+        // 도움말 패널 토글
+        function toggleHelp() {
+            const helpPanel = document.getElementById('help-panel');
+            if (helpPanel.style.display === 'none' || helpPanel.style.display === '') {
+                helpPanel.style.display = 'block';
+            } else {
+                helpPanel.style.display = 'none';
+            }
+        }
     </script>
 </body>
 </html>

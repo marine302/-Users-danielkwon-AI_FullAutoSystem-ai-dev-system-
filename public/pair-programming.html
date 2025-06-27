@@ -251,8 +251,15 @@
         }
 
         .chat-input-container {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            width: 350px;
             padding: 15px;
+            background: #2d2d2d;
             border-top: 1px solid #555;
+            border-left: 1px solid #555;
+            z-index: 100;
         }
 
         .chat-input {
@@ -265,15 +272,15 @@
             font-size: 14px;
         }
 
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            padding-bottom: 80px; /* 입력창 공간 확보 */
+        }
+
         .status-indicator {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 10px 20px;
-            border-radius: 20px;
-            color: white;
-            font-weight: bold;
-            z-index: 1000;
+            display: none; /* 헤더로 이동했으므로 숨김 */
         }
 
         .status-indicator.connected {
@@ -395,21 +402,85 @@
         .autocomplete-item.selected {
             background: #2196F3;
         }
+
+        /* 상태 표시 애니메이션 */
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* 도움말 패널 스타일 */
+        #help-panel {
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 버튼 호버 효과 */
+        button:hover, a:hover {
+            background: rgba(255,255,255,0.3) !important;
+            transform: translateY(-1px);
+        }
     </style>
 </head>
 <body>
-    <!-- 상단 헤더 -->
+    <!-- 상단 네비게이션 바 -->
     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; color: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
         <div style="display: flex; align-items: center; gap: 15px;">
             <h1 style="margin: 0; font-size: 1.5em; font-weight: bold;">🤝 AI 페어 프로그래밍</h1>
         </div>
-        <a href="/" style="background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 6px; text-decoration: none; color: white; transition: all 0.3s; display: flex; align-items: center; gap: 6px;">
-            <i class="fas fa-home"></i>
-            <span>메인으로</span>
-        </a>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <div id="connection-status" style="background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 6px; font-size: 14px; display: flex; align-items: center; gap: 6px;">
+                <div id="status-dot" style="width: 8px; height: 8px; background: #4CAF50; border-radius: 50%; animation: pulse 2s infinite;"></div>
+                <span id="status-text">연결됨</span>
+            </div>
+            <button onclick="toggleHelp()" style="background: rgba(255,255,255,0.2); padding: 8px 16px; border: none; border-radius: 6px; color: white; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 6px;">
+                <i class="fas fa-question-circle"></i>
+                <span>도움말</span>
+            </button>
+            <a href="/" style="background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 6px; text-decoration: none; color: white; transition: all 0.3s; display: flex; align-items: center; gap: 6px;">
+                <i class="fas fa-home"></i>
+                <span>메인으로</span>
+            </a>
+        </div>
     </div>
     
-    <div class="status-indicator" id="status-indicator">연결 중...</div>
+    <!-- 도움말 패널 -->
+    <div id="help-panel" style="display: none; background: #f8f9fa; border-bottom: 1px solid #dee2e6; padding: 15px 20px;">
+        <div style="max-width: 1200px; margin: 0 auto;">
+            <h3 style="margin: 0 0 15px 0; color: #495057;">🤝 페어 프로그래밍 사용법</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                <div>
+                    <h4 style="color: #667eea; margin-bottom: 8px;">🚀 시작하기</h4>
+                    <ul style="margin: 0; padding-left: 20px; color: #6c757d;">
+                        <li><strong>새 세션 시작</strong>: 프로젝트 타입과 언어 선택</li>
+                        <li><strong>세션 참가</strong>: 다른 사용자의 세션 ID 입력</li>
+                        <li><strong>실시간 협업</strong>: 여러 명이 동시에 코드 편집</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="color: #667eea; margin-bottom: 8px;">💬 AI 채팅</h4>
+                    <ul style="margin: 0; padding-left: 20px; color: #6c757d;">
+                        <li><strong>@ai</strong>로 시작하여 AI에게 질문</li>
+                        <li>코드 개선, 버그 찾기, 설명 요청</li>
+                        <li>실시간으로 AI 도움 받기</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="color: #667eea; margin-bottom: 8px;">⚡ 주요 기능</h4>
+                    <ul style="margin: 0; padding-left: 20px; color: #6c757d;">
+                        <li><strong>실시간 동기화</strong>: 모든 변경사항 즉시 반영</li>
+                        <li><strong>커서 추적</strong>: 다른 사용자 위치 표시</li>
+                        <li><strong>자동완성</strong>: AI 기반 코드 제안</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
     
     <div class="main-container">
         <div class="sidebar">
@@ -970,6 +1041,36 @@ console.log(greetUser('AI 개발자'));
                 }
             } catch (error) {
                 console.error('자동완성 오류:', error);
+            }
+        }
+
+        // 도움말 패널 토글
+        function toggleHelp() {
+            const helpPanel = document.getElementById('help-panel');
+            const isVisible = helpPanel.style.display !== 'none';
+            helpPanel.style.display = isVisible ? 'none' : 'block';
+        }
+
+        // 상태 업데이트 함수 개선
+        function updateConnectionStatus(status, text) {
+            const statusDot = document.getElementById('status-dot');
+            const statusText = document.getElementById('status-text');
+            
+            if (statusDot && statusText) {
+                statusText.textContent = text;
+                
+                // 상태에 따른 색상 변경
+                switch(status) {
+                    case 'connected':
+                        statusDot.style.background = '#4CAF50';
+                        break;
+                    case 'connecting':
+                        statusDot.style.background = '#FF9800';
+                        break;
+                    case 'disconnected':
+                        statusDot.style.background = '#f44336';
+                        break;
+                }
             }
         }
 
