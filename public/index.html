@@ -1,7 +1,12 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
+           .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        } charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Development System</title>
     <style>
@@ -157,16 +162,34 @@
                     새로운 프로젝트 생성, 기능 추가, 빌드, 테스트 등 
                     전체 프로젝트 라이프사이클을 관리합니다.
                 </p>
-                <a href="/pair-programming" class="btn">프로젝트 관리</a>
+                <a href="/app" class="btn">프로젝트 관리</a>
             </div>
             
             <div class="card">
-                <h3>⚙️ 자동화</h3>
+                <h3>🤝 페어 프로그래밍</h3>
                 <p>
-                    명령어 실행, 파일 관리, Git 작업, NPM 관리 등 
-                    개발 작업을 자동화합니다.
+                    실시간 협업 개발, AI와 함께하는 코딩, 
+                    팀원들과의 동시 편집 기능을 제공합니다.
                 </p>
-                <a href="/monitoring" class="btn">자동화 테스트</a>
+                <a href="/pair-programming" class="btn">페어 프로그래밍</a>
+            </div>
+            
+            <div class="card">
+                <h3>📊 모니터링</h3>
+                <p>
+                    시스템 성능, 자원 사용량, 알림 등 
+                    실시간 시스템 상태를 모니터링합니다.
+                </p>
+                <a href="/monitoring-dashboard" class="btn">모니터링 대시보드</a>
+            </div>
+            
+            <div class="card">
+                <h3>⚙️ 고급 기능</h3>
+                <p>
+                    AI 코드 리뷰, 테스트 생성, 프로젝트 분석 등 
+                    고급 개발 도구들을 활용하세요.
+                </p>
+                <a href="/advanced-features" class="btn">고급 기능</a>
             </div>
         </div>
         
