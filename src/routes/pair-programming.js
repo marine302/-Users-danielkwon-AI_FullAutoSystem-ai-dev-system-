@@ -45,7 +45,7 @@ router.post('/start-session', async (req, res) => {
     activeSessions.set(sessionId, session);
     
     // AI 페어 프로그래밍 세션 초기화
-    const welcomeMessage = await aiService.generateResponse(
+    const welcomeMessage = await aiService.generateText(
       `새로운 ${language} ${projectType} 프로젝트의 페어 프로그래밍 세션을 시작합니다. 
        목표: ${goals.join(', ')}
        개발자에게 환영 메시지와 첫 번째 제안을 제공해주세요.`
@@ -93,7 +93,7 @@ router.post('/analyze-code', async (req, res) => {
     const analysis = await codeAnalyzer.analyzeCode(code, fileName);
     
     // AI 피드백 생성
-    const feedback = await aiService.generateResponse(
+    const feedback = await aiService.generateText(
       `다음 코드를 페어 프로그래밍 관점에서 분석해주세요:
        파일: ${fileName}
        액션: ${action}
@@ -183,7 +183,7 @@ ${session.context.recentChanges.map(change =>
 페어 프로그래밍 파트너로서 도움이 되는 응답을 제공해주세요.
 `;
     
-    const response = await aiService.generateResponse(contextualPrompt);
+    const response = await aiService.generateText(contextualPrompt);
     
     // 대화 기록 저장
     session.context.feedback.push({
@@ -425,7 +425,7 @@ async function generateRealTimeSuggestions(code, fileName, analysis, session) {
     }
     
     // 다음 단계 제안
-    const nextSteps = await aiService.generateResponse(
+    const nextSteps = await aiService.generateText(
       `현재 코드를 기반으로 다음에 구현해야 할 기능이나 개선사항을 제안해주세요:
        파일: ${fileName}
        프로젝트: ${session.projectType}
@@ -474,7 +474,7 @@ async function generateSessionSummary(session) {
     };
     
     // AI가 세션 성과 분석
-    const aiSummary = await aiService.generateResponse(
+    const aiSummary = await aiService.generateText(
       `다음 페어 프로그래밍 세션을 요약하고 성과를 분석해주세요:
        ${JSON.stringify(summary)}
        

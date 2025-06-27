@@ -576,7 +576,11 @@ console.log(greetUser('AI 개발자'));
                     updateRemoteCursor(message.data);
                     break;
                 case 'chat_message':
-                    addChatMessage(message.data);
+                    addChatMessage({
+                        type: 'user',
+                        userName: message.userId === currentUserId ? '나' : message.userId,
+                        message: message.message
+                    });
                     break;
                 case 'ai_response':
                     addChatMessage(message.data);
@@ -775,15 +779,31 @@ console.log(greetUser('AI 개발자'));
 
         // 채팅 메시지 전송
         function sendChatMessage(message) {
-            if (!ws || !currentSessionId) return;
+            if (!ws || !currentSessionId) {
+                console.warn('WebSocket 연결이 없거나 세션이 없습니다.');
+                return;
+            }
+            
+            // 먼저 자신의 메시지를 화면에 표시
+            addChatMessage({
+                type: 'user',
+                userName: '나',
+                message: message
+            });
             
             const chatMessage = {
                 type: 'chat_message',
                 sessionId: currentSessionId,
-                data: { message }
+                userId: currentUserId,
+                message: message
             };
             
             ws.send(JSON.stringify(chatMessage));
+            
+            // @ai로 시작하는 메시지인 경우 AI에게 요청
+            if (message.toLowerCase().startsWith('@ai ')) {
+                requestAIResponse(message.substring(4));
+            }
         }
 
         // AI 도움 요청
@@ -814,6 +834,40 @@ console.log(greetUser('AI 개발자'));
             } catch (error) {
                 console.error('AI 요청 오류:', error);
                 alert('AI 요청을 처리할 수 없습니다.');
+            } finally {
+                hideAIThinking();
+            }
+        }
+
+        // AI 응답 요청
+        async function requestAIResponse(message) {
+            try {
+                showAIThinking();
+                
+                const response = await fetch('/api/v1/pair-programming/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionId: currentSessionId,
+                        message: message,
+                        context: document.getElementById('code-textarea').value
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    addChatMessage({
+                        type: 'ai',
+                        userName: '🤖 AI',
+                        message: result.response
+                    });
+                } else {
+                    addSystemMessage('AI 응답을 가져올 수 없습니다: ' + result.error);
+                }
+            } catch (error) {
+                console.error('AI 응답 요청 오류:', error);
+                addSystemMessage('AI 응답 요청 중 오류가 발생했습니다.');
             } finally {
                 hideAIThinking();
             }

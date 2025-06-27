@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import http from 'http';
+import { WebSocketServer } from 'ws';
 
 // 환경변수 로드
 dotenv.config();
@@ -14,6 +15,84 @@ const __dirname = dirname(__filename);
 const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 3000;
+
+// WebSocket 서버 설정
+const wss = new WebSocketServer({ server });
+
+// WebSocket 연결 관리
+const wsConnections = new Map();
+
+wss.on('connection', (ws, req) => {
+  const connectionId = Date.now() + Math.random();
+  wsConnections.set(connectionId, ws);
+  
+  console.log(`🔌 WebSocket 연결: ${connectionId}`);
+  
+  ws.on('message', (data) => {
+    try {
+      const message = JSON.parse(data.toString());
+      handleWebSocketMessage(ws, message, connectionId);
+    } catch (error) {
+      console.error('WebSocket 메시지 파싱 오류:', error);
+    }
+  });
+  
+  ws.on('close', () => {
+    wsConnections.delete(connectionId);
+    console.log(`🔌 WebSocket 연결 종료: ${connectionId}`);
+  });
+  
+  ws.on('error', (error) => {
+    console.error('WebSocket 오류:', error);
+    wsConnections.delete(connectionId);
+  });
+});
+
+// WebSocket 메시지 처리
+function handleWebSocketMessage(ws, message, connectionId) {
+  switch (message.type) {
+    case 'join_session':
+      ws.sessionId = message.sessionId;
+      ws.send(JSON.stringify({
+        type: 'session_joined',
+        sessionId: message.sessionId,
+        status: 'success'
+      }));
+      break;
+      
+    case 'code_change':
+      // 다른 클라이언트들에게 코드 변경사항 브로드캐스트
+      broadcastToSession(message.sessionId, {
+        type: 'code_update',
+        code: message.code,
+        userId: message.userId,
+        timestamp: new Date().toISOString()
+      }, connectionId);
+      break;
+      
+    case 'chat_message':
+      // 채팅 메시지 브로드캐스트
+      broadcastToSession(message.sessionId, {
+        type: 'chat_message',
+        message: message.message,
+        userId: message.userId,
+        timestamp: new Date().toISOString()
+      }, connectionId);
+      break;
+      
+    default:
+      console.log('알 수 없는 WebSocket 메시지 타입:', message.type);
+  }
+}
+
+// 세션 내 다른 클라이언트들에게 메시지 브로드캐스트
+function broadcastToSession(sessionId, message, excludeConnectionId) {
+  wsConnections.forEach((ws, connId) => {
+    if (ws.sessionId === sessionId && connId !== excludeConnectionId && ws.readyState === 1) {
+      ws.send(JSON.stringify(message));
+    }
+  });
+}
 
 // 미들웨어 설정
 app.use(cors());
