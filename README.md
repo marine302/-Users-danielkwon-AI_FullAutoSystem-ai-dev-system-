@@ -88,6 +88,13 @@ PORT=3001 npm start
 ### 4. 웹 인터페이스 접속
 브라우저에서 `http://localhost:3001`에 접속하여 AI 개발 시스템을 사용할 수 있습니다.
 
+#### 🌐 주요 웹 페이지
+- **메인 대시보드**: `/` - 시스템 개요 및 주요 기능 접근
+- **프로젝트 관리**: `/app` - 프로젝트 생성 및 관리
+- **🤝 페어 프로그래밍**: `/pair-programming` - 실시간 협업 개발 ([자세한 사용법](docs/PAIR_PROGRAMMING_GUIDE.md))
+- **모니터링**: `/monitoring` - 시스템 상태 모니터링
+- **고급 기능**: `/advanced` - 고급 AI 기능 및 설정
+
 ## API 엔드포인트
 
 ### AI 서비스 (`/api/v1/ai`)
@@ -155,6 +162,27 @@ npm run build
 - [x] 테스트 프레임워크 설정
 - [x] 에러 핸들링 및 로깅
 - [x] 문서화 완료
+- [x] 프로덕션 배포 (Railway)
+
+## 🌐 프로덕션 배포
+
+현재 시스템이 Railway에 배포되어 있어 바로 사용할 수 있습니다:
+
+**🔗 배포된 URL**: https://web-production-ab820.up.railway.app
+
+#### 주요 기능 접근
+- **메인 대시보드**: https://web-production-ab820.up.railway.app/
+- **프로젝트 관리**: https://web-production-ab820.up.railway.app/app
+- **🤝 페어 프로그래밍**: https://web-production-ab820.up.railway.app/pair-programming
+- **모니터링**: https://web-production-ab820.up.railway.app/monitoring
+- **고급 기능**: https://web-production-ab820.up.railway.app/advanced-features
+
+#### API 엔드포인트
+- **헬스체크**: https://web-production-ab820.up.railway.app/health
+- **프로젝트 API**: https://web-production-ab820.up.railway.app/api/v1/projects
+- **페어 프로그래밍 API**: https://web-production-ab820.up.railway.app/api/v1/pair-programming
+
+**📚 자세한 페어 프로그래밍 사용법**: [페어 프로그래밍 가이드](docs/PAIR_PROGRAMMING_GUIDE.md)
 
 ## 주의사항
 - OpenAI API 키가 설정되지 않으면 AI 기능이 데모 모드로 실행됩니다
