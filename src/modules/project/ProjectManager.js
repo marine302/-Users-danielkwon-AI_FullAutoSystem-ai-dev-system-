@@ -72,7 +72,7 @@ class ProjectManager {
 
       // 데이터베이스에 저장
       try {
-        this.db.saveProject({
+        await this.db.createProject({
           id: projectInfo.id,
           name: projectInfo.name,
           description: projectInfo.description,
@@ -304,10 +304,10 @@ class ProjectManager {
    * 프로젝트 목록 조회
    * @returns {Array} 프로젝트 목록
    */
-  getProjects(filters = {}) {
+  async getProjects(filters = {}) {
     try {
       // 데이터베이스에서 프로젝트 조회
-      const dbProjects = this.db.getAllProjects(filters);
+      const dbProjects = await this.db.getAllProjects(filters);
       
       // 메모리의 프로젝트와 병합 (메모리가 더 최신일 수 있음)
       const memoryProjects = Array.from(this.projects.values());
@@ -315,10 +315,12 @@ class ProjectManager {
       // 중복 제거하고 최신 정보 유지
       const projectMap = new Map();
       
-      // 데이터베이스 프로젝트 먼저 추가
-      dbProjects.forEach(project => {
-        projectMap.set(project.id, project);
-      });
+      // 데이터베이스 프로젝트 먼저 추가 (배열인지 확인)
+      if (Array.isArray(dbProjects)) {
+        dbProjects.forEach(project => {
+          projectMap.set(project.id, project);
+        });
+      }
       
       // 메모리 프로젝트로 덮어쓰기 (더 최신)
       memoryProjects.forEach(project => {
@@ -335,16 +337,21 @@ class ProjectManager {
   /**
    * 특정 프로젝트 조회
    * @param {string} projectId - 프로젝트 ID
-   * @returns {Object} 프로젝트 정보
+   * @returns {Promise<Object>} 프로젝트 정보
    */
-  getProject(projectId) {
+  async getProject(projectId) {
     try {
       // 메모리에서 먼저 확인
       let project = this.projects.get(projectId);
       
       if (!project) {
         // 데이터베이스에서 조회
-        project = this.db.getProject(projectId);
+        project = await this.db.getProject(projectId);
+        
+        // 메모리에 캐시
+        if (project) {
+          this.projects.set(projectId, project);
+        }
       }
       
       return project;

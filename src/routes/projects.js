@@ -44,9 +44,9 @@ router.post('/', async (req, res) => {
 /**
  * 프로젝트 목록 조회 API
  */
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const projects = projectManager.getProjects();
+    const projects = await projectManager.getProjects();
     
     res.json({
       success: true,
@@ -69,10 +69,10 @@ router.get('/', (req, res) => {
 /**
  * 특정 프로젝트 조회 API
  */
-router.get('/:projectId', (req, res) => {
+router.get('/:projectId', async (req, res) => {
   try {
     const { projectId } = req.params;
-    const project = projectManager.getProject(projectId);
+    const project = await projectManager.getProject(projectId);
     
     if (!project) {
       return res.status(404).json({
