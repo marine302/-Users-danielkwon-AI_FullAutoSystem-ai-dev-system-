@@ -4,7 +4,6 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import http from 'http';
-import { WebSocketServer } from 'ws';
 
 // 환경변수 로드
 dotenv.config();
@@ -16,67 +15,70 @@ const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 3000;
 
-// WebSocket 서버 설정
-const wss = new WebSocketServer({ server });
+// WebSocket 서버 설정 (프로덕션에서 일시적으로 비활성화)
+let wss = null;
+let wsConnections = new Map();
 
-// WebSocket 연결 관리
-const wsConnections = new Map();
-const MAX_CONNECTIONS = 100; // 최대 연결 수 제한
-
-wss.on('connection', (ws, req) => {
-  // 연결 수 제한
-  if (wsConnections.size >= MAX_CONNECTIONS) {
-    ws.close(1013, 'Too many connections');
-    return;
-  }
+if (process.env.NODE_ENV !== 'production') {
+  const { WebSocketServer } = await import('ws');
+  wss = new WebSocketServer({ server });
   
-  const connectionId = Date.now() + Math.random();
-  wsConnections.set(connectionId, {
-    ws,
-    sessionId: null,
-    lastActivity: Date.now()
-  });
+  const MAX_CONNECTIONS = 100;
   
-  console.log(`🔌 WebSocket 연결: ${connectionId} (총 ${wsConnections.size}개)`);
-  
-  // 연결 활동 갱신
-  ws.on('message', (data) => {
-    try {
-      const connection = wsConnections.get(connectionId);
-      if (connection) {
-        connection.lastActivity = Date.now();
+  wss.on('connection', (ws, req) => {
+    if (wsConnections.size >= MAX_CONNECTIONS) {
+      ws.close(1013, 'Too many connections');
+      return;
+    }
+    
+    const connectionId = Date.now() + Math.random();
+    wsConnections.set(connectionId, {
+      ws,
+      sessionId: null,
+      lastActivity: Date.now()
+    });
+    
+    console.log(`🔌 WebSocket 연결: ${connectionId} (총 ${wsConnections.size}개)`);
+    
+    ws.on('message', (data) => {
+      try {
+        const connection = wsConnections.get(connectionId);
+        if (connection) {
+          connection.lastActivity = Date.now();
+        }
+        
+        const message = JSON.parse(data.toString());
+        handleWebSocketMessage(ws, message, connectionId);
+      } catch (error) {
+        console.error('WebSocket 메시지 파싱 오류:', error);
       }
-      
-      const message = JSON.parse(data.toString());
-      handleWebSocketMessage(ws, message, connectionId);
-    } catch (error) {
-      console.error('WebSocket 메시지 파싱 오류:', error);
-    }
-  });
-  
-  ws.on('close', () => {
-    wsConnections.delete(connectionId);
-    console.log(`🔌 WebSocket 연결 종료: ${connectionId} (남은 연결: ${wsConnections.size}개)`);
-  });
-  
-  ws.on('error', (error) => {
-    console.error('WebSocket 오류:', error);
-    wsConnections.delete(connectionId);
-  });
-  
-  // ping 메시지로 연결 확인
-  const pingInterval = setInterval(() => {
-    if (ws.readyState === 1) {
-      ws.ping();
-    } else {
-      clearInterval(pingInterval);
+    });
+    
+    ws.on('close', () => {
       wsConnections.delete(connectionId);
-    }
-  }, 30000); // 30초마다 ping
-});
+      console.log(`🔌 WebSocket 연결 종료: ${connectionId} (남은 연결: ${wsConnections.size}개)`);
+    });
+    
+    ws.on('error', (error) => {
+      console.error('WebSocket 오류:', error);
+      wsConnections.delete(connectionId);
+    });
+    
+    const pingInterval = setInterval(() => {
+      if (ws.readyState === 1) {
+        ws.ping();
+      } else {
+        clearInterval(pingInterval);
+        wsConnections.delete(connectionId);
+      }
+    }, 30000);
+  });
+}
 
 // WebSocket 메시지 처리
 function handleWebSocketMessage(ws, message, connectionId) {
+  if (!wsConnections) return;
+  
   const connection = wsConnections.get(connectionId);
   if (!connection) return;
   
@@ -91,7 +93,6 @@ function handleWebSocketMessage(ws, message, connectionId) {
       break;
       
     case 'code_change':
-      // 다른 클라이언트들에게 코드 변경사항 브로드캐스트
       broadcastToSession(message.sessionId, {
         type: 'code_update',
         code: message.code,
@@ -101,7 +102,6 @@ function handleWebSocketMessage(ws, message, connectionId) {
       break;
       
     case 'chat_message':
-      // 채팅 메시지 브로드캐스트
       broadcastToSession(message.sessionId, {
         type: 'chat_message',
         message: message.message,
@@ -117,6 +117,8 @@ function handleWebSocketMessage(ws, message, connectionId) {
 
 // 세션 내 다른 클라이언트들에게 메시지 브로드캐스트
 function broadcastToSession(sessionId, message, excludeConnectionId) {
+  if (!wsConnections) return;
+  
   wsConnections.forEach((connection, connId) => {
     if (connection.sessionId === sessionId && 
         connId !== excludeConnectionId && 
@@ -254,18 +256,20 @@ app.get('/api/v1/collaboration/session/:sessionId/stats', (req, res) => {
 });
 
 // 비활성 WebSocket 연결 정리 (5분마다)
-setInterval(() => {
-  const now = Date.now();
-  const inactiveTimeout = 5 * 60 * 1000; // 5분
-  
-  wsConnections.forEach((connection, connectionId) => {
-    if (now - connection.lastActivity > inactiveTimeout) {
-      console.log(`🧹 비활성 WebSocket 연결 정리: ${connectionId}`);
-      connection.ws.terminate();
-      wsConnections.delete(connectionId);
-    }
-  });
-}, 5 * 60 * 1000);
+if (wss) {
+  setInterval(() => {
+    const now = Date.now();
+    const inactiveTimeout = 5 * 60 * 1000; // 5분
+    
+    wsConnections.forEach((connection, connectionId) => {
+      if (now - connection.lastActivity > inactiveTimeout) {
+        console.log(`🧹 비활성 WebSocket 연결 정리: ${connectionId}`);
+        connection.ws.terminate();
+        wsConnections.delete(connectionId);
+      }
+    });
+  }, 5 * 60 * 1000);
+}
 
 // 에러 핸들링 미들웨어
 app.use((err, req, res, next) => {
